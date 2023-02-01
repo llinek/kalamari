@@ -117,7 +117,12 @@ public class MainActivity extends Activity {
                         JSONObject res = new JSONObject(response.toString());
                         out.write(res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
                         out.close();
-
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                basicScreen();
+                            }
+                        });
                     }
                 } catch (Throwable e) {
                     runOnUiThread(new Runnable() {
@@ -136,7 +141,15 @@ public class MainActivity extends Activity {
     }
 
     private void basicScreen() {
-
+        LinearLayout vBox = new LinearLayout(this);
+        this.setContentView(vBox);
+        Button rozvrh = new Button(this);
+        Button znamky = new Button(this);
+        rozvrh.setMinHeight(50);
+        rozvrh.setText("Rozvrh");
+        rozvrh.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        //rozvrh.setMinHeight(40);
+        vBox.addView(rozvrh);
     }
 
     private void loginScreen() {
