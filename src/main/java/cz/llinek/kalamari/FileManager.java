@@ -8,8 +8,7 @@ import java.io.IOException;
 
 public class FileManager {
     static File filesDir = null;
-
-    public static void editFile(String filename) throws IOException {
+    public static File editFile(String filename) throws IOException {
         if (!new File(filesDir, filename).exists()) {
             File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
             if (!filesArray.exists()) {
@@ -20,8 +19,8 @@ public class FileManager {
             writer.close();
             new File(filesDir, filename).createNewFile();
         }
+        return new File(filesDir, filename);
     }
-
     public static boolean exists(String filename) {
         File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
         if (filesArray.exists()) {

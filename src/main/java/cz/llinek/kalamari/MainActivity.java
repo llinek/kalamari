@@ -8,12 +8,16 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
@@ -61,11 +65,9 @@ public class MainActivity extends Activity {
         thread.setDaemon(true);
         thread.start();
     }
-
     private void loginRefreshToken() {
 
     }
-
     private void login(String url, String user, String pwd) {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -82,12 +84,12 @@ public class MainActivity extends Activity {
                     output.close();
                     connection.connect();
                     if (connection.getErrorStream() == null) {
-                        System.err.println("Body:" + "client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
+                        /*System.err.println("Body:" + "client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
                         response.append("Message: ");
                         response.append(connection.getResponseCode());
                         response.append(", ");
                         response.append(connection.getResponseMessage());
-                        System.err.println(response);
+                        System.err.println(response.toString());*/
                         BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                         String temp = input.readLine();
                         while (temp != null) {
@@ -107,10 +109,14 @@ public class MainActivity extends Activity {
                         response.append(connection.getResponseCode());
                         response.append(", ");
                         response.append(connection.getResponseMessage());
-                        System.err.println(response);
+                        System.err.println(response.toString());
                     }
 
                     if (connection.getResponseCode() == 200) {
+                        FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
+                        JSONObject res = new JSONObject(response.toString());
+                        out.write(res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
+                        out.close();
 
                     }
                 } catch (Throwable e) {
@@ -129,6 +135,10 @@ public class MainActivity extends Activity {
         thread.start();
     }
 
+    private void basicScreen() {
+
+    }
+
     private void loginScreen() {
         EditText urlField = new EditText(this);
         EditText userField = new EditText(this);
@@ -140,6 +150,16 @@ public class MainActivity extends Activity {
         Button schoolList = new Button(this);
         clearPwd.setMinWidth(0);
         clearPwd.setMinHeight(0);
+        clearPwd.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (compoundButton.isChecked()) {
+                    pwdField.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                } else {
+                    pwdField.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                }
+            }
+        });
         confirm.setText("Confirm");
         confirm.setTextSize(30);
         confirm.setPadding(0, 0, 0, 0);
@@ -210,7 +230,7 @@ public class MainActivity extends Activity {
             }
         });
         pwdField.setHint("Password:");
-        pwdField.setText("Nl80/vOT");
+        pwdField.setText("");
         pwdField.setLines(1);
         pwdField.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         pwdField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
