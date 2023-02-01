@@ -202,7 +202,7 @@ public class MainActivity extends Activity {
         vBox.setOrientation(LinearLayout.VERTICAL);
         pwdBox.setOrientation(LinearLayout.HORIZONTAL);
         urlField.setHint("School url:");
-        urlField.setText("gymnazium-opatov.kalamari.cz");
+        urlField.setText("gymnazium-opatov.bakalari.cz");
         urlField.setLines(1);
         urlField.setInputType(InputType.TYPE_TEXT_VARIATION_URI | InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         urlField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
