@@ -145,7 +145,7 @@ public class MainActivity extends Activity {
         this.setContentView(vBox);
         Button rozvrh = new Button(this);
         Button znamky = new Button(this);
-        rozvrh.setMinHeight(50);
+        rozvrh.setMinHeight(100);
         rozvrh.setText("Rozvrh");
         rozvrh.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         //rozvrh.setMinHeight(40);
