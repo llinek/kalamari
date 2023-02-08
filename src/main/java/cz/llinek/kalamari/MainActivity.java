@@ -17,6 +17,7 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -65,9 +66,11 @@ public class MainActivity extends Activity {
         thread.setDaemon(true);
         thread.start();
     }
+
     private void loginRefreshToken() {
 
     }
+
     private void login(String url, String user, String pwd) {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -115,7 +118,7 @@ public class MainActivity extends Activity {
                     if (connection.getResponseCode() == 200) {
                         FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                         JSONObject res = new JSONObject(response.toString());
-                        out.write(res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
+                        out.write(url + '\n' + res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
                         out.close();
                         runOnUiThread(new Runnable() {
                             @Override
@@ -140,7 +143,88 @@ public class MainActivity extends Activity {
         thread.start();
     }
 
+    private void login() {
+        if (FileManager.exists(Constants.CREDENTIALSFILENAME)) {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        BufferedReader bufferedReader = new BufferedReader(new FileReader(FileManager.editFile(Constants.CREDENTIALSFILENAME)));
+                        String url = bufferedReader.readLine();
+                        bufferedReader.readLine();
+                        long expirationTime = Long.parseLong(bufferedReader.readLine());
+                        if (System.currentTimeMillis() < expirationTime - 100000) {
+                            return;
+                        }
+                        bufferedReader.readLine();
+                        String user = bufferedReader.readLine();
+                        String pwd = bufferedReader.readLine();
+                        StringBuilder response = new StringBuilder();
+                        HttpsURLConnection connection = (HttpsURLConnection) new URL(url + "/api/login").openConnection();
+                        connection.setRequestMethod("POST");
+                        connection.setDoInput(true);
+                        connection.setDoOutput(true);
+                        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                        PrintWriter output = new PrintWriter(connection.getOutputStream());
+                        output.print("client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
+                        output.close();
+                        connection.connect();
+                        if (connection.getErrorStream() == null) {
+                        /*System.err.println("Body:" + "client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
+                        response.append("Message: ");
+                        response.append(connection.getResponseCode());
+                        response.append(", ");
+                        response.append(connection.getResponseMessage());
+                        System.err.println(response.toString());*/
+                            BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                            String temp = input.readLine();
+                            while (temp != null) {
+                                response.append(temp);
+                                temp = input.readLine();
+                            }
+                            connection.disconnect();
+                            input.close();
+                        } else {
+                            BufferedReader input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                            String temp = input.readLine();
+                            while (temp != null) {
+                                response.append(temp);
+                                temp = input.readLine();
+                            }
+                            response.append("Error: ");
+                            response.append(connection.getResponseCode());
+                            response.append(", ");
+                            response.append(connection.getResponseMessage());
+                            System.err.println(response.toString());
+                        }
+
+                        if (connection.getResponseCode() == 200) {
+                            FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
+                            JSONObject res = new JSONObject(response.toString());
+                            out.write(res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
+                            out.close();
+                        }
+                    } catch (Throwable e) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "Exception", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        e.printStackTrace();
+                        System.err.println(e.getMessage());
+                    }
+                }
+            });
+            thread.setDaemon(true);
+            thread.start();
+        } else {
+            loginScreen();
+        }
+    }
+
     private void basicScreen() {
+        login();
         LinearLayout vBox = new LinearLayout(this);
         this.setContentView(vBox);
         Button rozvrh = new Button(this);
@@ -273,6 +357,6 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FileManager.filesDir = getFilesDir();
-        loginScreen();
+        basicScreen();
     }
 }
