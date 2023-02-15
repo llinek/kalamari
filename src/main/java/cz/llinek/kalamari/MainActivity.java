@@ -19,6 +19,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
@@ -118,7 +119,7 @@ public class MainActivity extends Activity {
                     if (connection.getResponseCode() == 200) {
                         FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                         JSONObject res = new JSONObject(response.toString());
-                        out.write(url + '\n' + res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
+                        out.write(url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                         out.close();
                         runOnUiThread(new Runnable() {
                             @Override
@@ -196,12 +197,19 @@ public class MainActivity extends Activity {
                             response.append(", ");
                             response.append(connection.getResponseMessage());
                             System.err.println(response.toString());
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "Wrong login", Toast.LENGTH_LONG).show();
+                                    loginScreen();
+                                }
+                            });
                         }
 
                         if (connection.getResponseCode() == 200) {
                             FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                             JSONObject res = new JSONObject(response.toString());
-                            out.write(res.getString("access_token") + '\n' + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + '\n' + res.getString("refresh_token") + '\n' + user + '\n' + pwd);
+                            out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                             out.close();
                         }
                     } catch (Throwable e) {
@@ -219,6 +227,7 @@ public class MainActivity extends Activity {
             thread.setDaemon(true);
             thread.start();
         } else {
+            System.out.println("else");
             loginScreen();
         }
     }
@@ -227,13 +236,45 @@ public class MainActivity extends Activity {
         login();
         LinearLayout vBox = new LinearLayout(this);
         this.setContentView(vBox);
-        Button rozvrh = new Button(this);
-        Button znamky = new Button(this);
-        rozvrh.setMinHeight(100);
-        rozvrh.setText("Rozvrh");
-        rozvrh.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        //rozvrh.setMinHeight(40);
-        vBox.addView(rozvrh);
+        Button logout = new Button(this);
+        Button timetable = new Button(this);
+        Button marks = new Button(this);
+        logout.setMinHeight(100);
+        logout.setText("Logout");
+        logout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    FileManager.deleteFile(Constants.CREDENTIALSFILENAME);
+                    loginScreen();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Logout succesful", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Exception", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            }
+        });
+        timetable.setMinHeight(100);
+        timetable.setText("Timetable");
+        timetable.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        marks.setMinHeight(100);
+        marks.setText("Marks");
+        marks.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        //timetable.setMinHeight(40);
+        vBox.addView(logout);
+        vBox.addView(timetable);
+        vBox.addView(marks);
     }
 
     private void loginScreen() {
