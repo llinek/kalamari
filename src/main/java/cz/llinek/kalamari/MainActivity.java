@@ -144,8 +144,10 @@ public class MainActivity extends Activity {
         thread.start();
     }
 
-    private void login() {
+    private void login(Runnable runAfter) {
+        Toast.makeText(this, "login", Toast.LENGTH_SHORT).show();
         if (FileManager.exists(Constants.CREDENTIALSFILENAME)) {
+            Toast.makeText(this, "loginexists", Toast.LENGTH_SHORT).show();
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -155,6 +157,7 @@ public class MainActivity extends Activity {
                         bufferedReader.readLine();
                         long expirationTime = Long.parseLong(bufferedReader.readLine());
                         if (System.currentTimeMillis() < expirationTime - 100000) {
+                            runOnUiThread(runAfter);
                             return;
                         }
                         bufferedReader.readLine();
@@ -207,10 +210,12 @@ public class MainActivity extends Activity {
                         }
 
                         if (connection.getResponseCode() == 200) {
+                            Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
                             FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                             JSONObject res = new JSONObject(response.toString());
                             out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                             out.close();
+                            runOnUiThread(runAfter);
                         }
                     } catch (Throwable e) {
                         runOnUiThread(new Runnable() {
@@ -227,21 +232,26 @@ public class MainActivity extends Activity {
             thread.setDaemon(true);
             thread.start();
         } else {
-            System.out.println("else");
+            Toast.makeText(this, "else", Toast.LENGTH_SHORT).show();
             loginScreen();
         }
     }
 
     private void basicScreen() {
-        login();
+        Toast.makeText(this, "afterlogin", Toast.LENGTH_SHORT).show();
         LinearLayout vBox = new LinearLayout(this);
-        this.setContentView(vBox);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, 0);
+        vBox.setOrientation(LinearLayout.VERTICAL);
+        vBox.setLayoutParams(params);
+        vBox.setPadding(0, 0, 0, 0);
+        this.setContentView(vBox, params);
         Button logout = new Button(this);
         Button timetable = new Button(this);
         Button marks = new Button(this);
         logout.setMinHeight(100);
         logout.setText("Logout");
-        logout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        logout.setLayoutParams(params);
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -267,11 +277,13 @@ public class MainActivity extends Activity {
         });
         timetable.setMinHeight(100);
         timetable.setText("Timetable");
-        timetable.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        timetable.setPadding(0, 0, 0, 0);
+        timetable.setLayoutParams(params);
         marks.setMinHeight(100);
+        marks.setPadding(0, 0, 0, 0);
         marks.setText("Marks");
-        marks.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        //timetable.setMinHeight(40);
+        marks.setLayoutParams(params);
+        timetable.setMinHeight(100);
         vBox.addView(logout);
         vBox.addView(timetable);
         vBox.addView(marks);
@@ -398,6 +410,12 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FileManager.filesDir = getFilesDir();
-        basicScreen();
+        Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
+        login(new Runnable() {
+            @Override
+            public void run() {
+                basicScreen();
+            }
+        });
     }
 }
