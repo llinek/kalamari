@@ -14,6 +14,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -210,7 +212,7 @@ public class MainActivity extends Activity {
                         }
 
                         if (connection.getResponseCode() == 200) {
-                            Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
                             FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                             JSONObject res = new JSONObject(response.toString());
                             out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
@@ -239,18 +241,22 @@ public class MainActivity extends Activity {
 
     private void basicScreen() {
         Toast.makeText(this, "afterlogin", Toast.LENGTH_SHORT).show();
-        LinearLayout vBox = new LinearLayout(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        CoordinatorLayout vBox = new CoordinatorLayout(this);
+        CoordinatorLayout.LayoutParams params = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, CoordinatorLayout.LayoutParams.WRAP_CONTENT);
+        CoordinatorLayout.LayoutParams vboxparams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, CoordinatorLayout.LayoutParams.MATCH_PARENT);
         params.setMargins(0, 0, 0, 0);
-        vBox.setOrientation(LinearLayout.VERTICAL);
-        vBox.setLayoutParams(params);
+        //vBox.setOrientation(LinearLayout.VERTICAL);
+        vBox.setLayoutParams(vboxparams);
+        vBox.setLayoutParams(vboxparams);
         vBox.setPadding(0, 0, 0, 0);
         this.setContentView(vBox, params);
+        //vBox.setBackgroundResource(R.color.black);
         Button logout = new Button(this);
         Button timetable = new Button(this);
         Button marks = new Button(this);
         logout.setMinHeight(100);
         logout.setText("Logout");
+        //logout.setBackgroundResource(R.color.dark_blue);
         logout.setLayoutParams(params);
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -279,10 +285,12 @@ public class MainActivity extends Activity {
         timetable.setText("Timetable");
         timetable.setPadding(0, 0, 0, 0);
         timetable.setLayoutParams(params);
+        //timetable.setBackgroundResource(R.color.dark_blue);
         marks.setMinHeight(100);
         marks.setPadding(0, 0, 0, 0);
         marks.setText("Marks");
         marks.setLayoutParams(params);
+        //marks.setBackgroundResource(R.color.dark_blue);
         timetable.setMinHeight(100);
         vBox.addView(logout);
         vBox.addView(timetable);
