@@ -14,8 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -30,31 +29,55 @@ import java.net.URLEncoder;
 import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends Activity {
-    private void performRequest(String url, RequestCallback runLater) {
+    private String url;
+    private String token;
+    private void performRequest(String appendix, RequestCallback runLater) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     StringBuilder response = new StringBuilder();
-                    HttpsURLConnection connection = (HttpsURLConnection) new URL(url).openConnection();
+                    HttpsURLConnection connection = (HttpsURLConnection) new URL(url + appendix).openConnection();
                     connection.setRequestMethod("GET");
                     connection.setDoInput(true);
-                    connection.setRequestProperty("Accept", "application/json");
+                    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                    connection.setRequestProperty("Authorization", "Bearer " + token);
+                    System.out.println(token);
                     connection.connect();
-                    BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    String temp = input.readLine();
-                    while (temp != null) {
-                        response.append(temp);
-                        temp = input.readLine();
-                    }
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            runLater.run(response.toString());
+                    if (connection.getErrorStream() == null) {
+                        BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        String temp = input.readLine();
+                        while (temp != null) {
+                            response.append(temp);
+                            temp = input.readLine();
                         }
-                    });
-                    connection.disconnect();
-                    input.close();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                runLater.run(response.toString());
+                            }
+                        });
+                        connection.disconnect();
+                        input.close();
+                    } else {
+                        BufferedReader input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                        String temp = input.readLine();
+                        while (temp != null) {
+                            response.append(temp);
+                            temp = input.readLine();
+                        }
+                        response.append("Error: ");
+                        response.append(connection.getResponseCode());
+                        response.append(", ");
+                        response.append(connection.getResponseMessage());
+                        System.err.println(response.toString());
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this, "Wrong request", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
                 } catch (Throwable e) {
                     runOnUiThread(new Runnable() {
                         @Override
@@ -121,6 +144,8 @@ public class MainActivity extends Activity {
                     if (connection.getResponseCode() == 200) {
                         FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                         JSONObject res = new JSONObject(response.toString());
+                        setUrl(url);
+                        setToken(res.getString("access_token"));
                         out.write(url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                         out.close();
                         runOnUiThread(new Runnable() {
@@ -212,9 +237,16 @@ public class MainActivity extends Activity {
                         }
 
                         if (connection.getResponseCode() == 200) {
-                            //Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                             FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                             JSONObject res = new JSONObject(response.toString());
+                            setUrl(url);
+                            setToken(res.getString("access_token"));
                             out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                             out.close();
                             runOnUiThread(runAfter);
@@ -241,22 +273,18 @@ public class MainActivity extends Activity {
 
     private void basicScreen() {
         Toast.makeText(this, "afterlogin", Toast.LENGTH_SHORT).show();
-        CoordinatorLayout vBox = new CoordinatorLayout(this);
-        CoordinatorLayout.LayoutParams params = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, CoordinatorLayout.LayoutParams.WRAP_CONTENT);
-        CoordinatorLayout.LayoutParams vboxparams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, CoordinatorLayout.LayoutParams.MATCH_PARENT);
+        LinearLayout vBox = new LinearLayout(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, 0);
-        //vBox.setOrientation(LinearLayout.VERTICAL);
-        vBox.setLayoutParams(vboxparams);
-        vBox.setLayoutParams(vboxparams);
+        vBox.setOrientation(LinearLayout.VERTICAL);
+        vBox.setLayoutParams(params);
         vBox.setPadding(0, 0, 0, 0);
         this.setContentView(vBox, params);
-        //vBox.setBackgroundResource(R.color.black);
         Button logout = new Button(this);
         Button timetable = new Button(this);
         Button marks = new Button(this);
         logout.setMinHeight(100);
         logout.setText("Logout");
-        //logout.setBackgroundResource(R.color.dark_blue);
         logout.setLayoutParams(params);
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -285,16 +313,35 @@ public class MainActivity extends Activity {
         timetable.setText("Timetable");
         timetable.setPadding(0, 0, 0, 0);
         timetable.setLayoutParams(params);
-        //timetable.setBackgroundResource(R.color.dark_blue);
+        timetable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                performRequest("/api/3/timetable/permanent", new RequestCallback() {
+                    @Override
+                    public void run(String response) {
+                        timetable(response);
+                    }
+                });
+            }
+        });
         marks.setMinHeight(100);
         marks.setPadding(0, 0, 0, 0);
         marks.setText("Marks");
         marks.setLayoutParams(params);
-        //marks.setBackgroundResource(R.color.dark_blue);
         timetable.setMinHeight(100);
         vBox.addView(logout);
         vBox.addView(timetable);
         vBox.addView(marks);
+    }
+
+    private void timetable(String response) {
+        try {
+            JSONObject rozvrh = new JSONObject(response);
+            Toast.makeText(this, response, Toast.LENGTH_LONG).show();
+            System.err.println(response.replaceAll(",", ",\n"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private void loginScreen() {
@@ -413,11 +460,36 @@ public class MainActivity extends Activity {
         this.setContentView(vBox);
     }
 
+    private String getUrl() {
+        return url;
+    }
+
+    private void setUrl(String url) {
+        this.url = url;
+    }
+
+    private String getToken() {
+        return token;
+    }
+
+    private void setToken(String token) {
+        this.token = token;
+    }
+
     //@SuppressLint("MissingSuperCall")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FileManager.filesDir = getFilesDir();
+        if (FileManager.exists(Constants.CREDENTIALSFILENAME)) {
+            try {
+                BufferedReader input = new BufferedReader(new FileReader(FileManager.editFile(Constants.CREDENTIALSFILENAME)));
+                setUrl(input.readLine());
+                setToken(input.readLine());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
         login(new Runnable() {
             @Override
