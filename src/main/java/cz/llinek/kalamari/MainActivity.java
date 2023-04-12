@@ -339,6 +339,22 @@ public class MainActivity extends Activity {
             JSONObject rozvrh = new JSONObject(response);
             Toast.makeText(this, response, Toast.LENGTH_LONG).show();
             System.err.println(response.replaceAll(",", ",\n"));
+            int minHours = -1;
+            int maxHours = -1;
+            int days = 0;
+            for (int i = rozvrh.getJSONArray("Days").length(); i < 0 ; i--) {
+                if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length() > 0) {
+                    days++;
+                    for (int j = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length(); j > 0; j--) {
+                        if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId") < minHours || minHours == -1) {
+                            minHours = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId");
+                        }
+                        if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId") > maxHours || maxHours == -1) {
+                            maxHours = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId");
+                        }
+                    }
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
