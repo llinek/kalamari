@@ -19,7 +19,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -31,6 +30,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class MainActivity extends Activity {
     private String url;
     private String token;
+
     private void performRequest(String appendix, RequestCallback runLater) {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -142,12 +142,16 @@ public class MainActivity extends Activity {
                     }
 
                     if (connection.getResponseCode() == 200) {
-                        FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
+                        /*FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                         JSONObject res = new JSONObject(response.toString());
                         setUrl(url);
                         setToken(res.getString("access_token"));
                         out.write(url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
-                        out.close();
+                        out.close();*/
+                        JSONObject res = new JSONObject(response.toString());
+                        setUrl(url);
+                        setToken(res.getString("access_token"));
+                        FileManager.fileWrite(Constants.CREDENTIALSFILENAME, url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -243,12 +247,13 @@ public class MainActivity extends Activity {
                                     Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
                                 }
                             });
-                            FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
+                            //FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                             JSONObject res = new JSONObject(response.toString());
                             setUrl(url);
                             setToken(res.getString("access_token"));
-                            out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
-                            out.close();
+                            /*out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
+                            out.close();*/
+                            FileManager.fileWrite(Constants.CREDENTIALSFILENAME, url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                             runOnUiThread(runAfter);
                         }
                     } catch (Throwable e) {
@@ -342,7 +347,7 @@ public class MainActivity extends Activity {
             int minHours = -1;
             int maxHours = -1;
             int days = 0;
-            for (int i = rozvrh.getJSONArray("Days").length(); i < 0 ; i--) {
+            for (int i = rozvrh.getJSONArray("Days").length(); i < 0; i--) {
                 if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length() > 0) {
                     days++;
                     for (int j = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length(); j > 0; j--) {

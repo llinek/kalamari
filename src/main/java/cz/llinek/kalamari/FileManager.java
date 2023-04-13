@@ -23,6 +23,40 @@ public class FileManager {
         return new File(filesDir, filename);
     }
 
+    public static void fileWrite(String filename, String content) throws IOException {
+        if (!new File(filesDir, filename).exists()) {
+            File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+            if (!filesArray.exists()) {
+                filesArray.createNewFile();
+            }
+            FileWriter writer = new FileWriter(filesArray);
+            writer.append(filename + "\n");
+            writer.close();
+            new File(filesDir, filename).createNewFile();
+        }
+        new File(filesDir, filename).delete();
+        new File(filesDir, filename).createNewFile();
+        FileWriter output = new FileWriter(new File(filesDir, filename));
+        output.write(content);
+        output.close();
+    }
+
+    public static void fileAppend(String filename, String content) throws IOException {
+        if (!new File(filesDir, filename).exists()) {
+            File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+            if (!filesArray.exists()) {
+                filesArray.createNewFile();
+            }
+            FileWriter writer = new FileWriter(filesArray);
+            writer.append(filename + "\n");
+            writer.close();
+            new File(filesDir, filename).createNewFile();
+        }
+        FileWriter output = new FileWriter(new File(filesDir, filename));
+        output.write(content);
+        output.close();
+    }
+
     public static void deleteFile(String filename) throws IOException {
         File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
         if (filesArray.exists()) {
