@@ -113,12 +113,6 @@ public class MainActivity extends Activity {
                     output.close();
                     connection.connect();
                     if (connection.getErrorStream() == null) {
-                        /*System.err.println("Body:" + "client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
-                        response.append("Message: ");
-                        response.append(connection.getResponseCode());
-                        response.append(", ");
-                        response.append(connection.getResponseMessage());
-                        System.err.println(response.toString());*/
                         BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                         String temp = input.readLine();
                         while (temp != null) {
@@ -142,12 +136,6 @@ public class MainActivity extends Activity {
                     }
 
                     if (connection.getResponseCode() == 200) {
-                        /*FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
-                        JSONObject res = new JSONObject(response.toString());
-                        setUrl(url);
-                        setToken(res.getString("access_token"));
-                        out.write(url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
-                        out.close();*/
                         JSONObject res = new JSONObject(response.toString());
                         setUrl(url);
                         setToken(res.getString("access_token"));
@@ -195,7 +183,7 @@ public class MainActivity extends Activity {
                         String user = bufferedReader.readLine();
                         String pwd = bufferedReader.readLine();
                         StringBuilder response = new StringBuilder();
-                        HttpsURLConnection connection = (HttpsURLConnection) new URL(url + "/api/login").openConnection();
+                        HttpsURLConnection connection = (HttpsURLConnection) new URL(getUrl() + "/api/login").openConnection();
                         connection.setRequestMethod("POST");
                         connection.setDoInput(true);
                         connection.setDoOutput(true);
@@ -205,12 +193,6 @@ public class MainActivity extends Activity {
                         output.close();
                         connection.connect();
                         if (connection.getErrorStream() == null) {
-                        /*System.err.println("Body:" + "client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
-                        response.append("Message: ");
-                        response.append(connection.getResponseCode());
-                        response.append(", ");
-                        response.append(connection.getResponseMessage());
-                        System.err.println(response.toString());*/
                             BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                             String temp = input.readLine();
                             while (temp != null) {
@@ -247,12 +229,9 @@ public class MainActivity extends Activity {
                                     Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
                                 }
                             });
-                            //FileWriter out = new FileWriter(FileManager.editFile(Constants.CREDENTIALSFILENAME));
                             JSONObject res = new JSONObject(response.toString());
                             setUrl(url);
                             setToken(res.getString("access_token"));
-                            /*out.write(url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
-                            out.close();*/
                             FileManager.fileWrite(Constants.CREDENTIALSFILENAME, url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                             runOnUiThread(runAfter);
                         }
@@ -416,13 +395,14 @@ public class MainActivity extends Activity {
                     url = "https://" + url;
                 }
                 final String url1 = url;
-                performRequest(url + "/api/3", new RequestCallback() {
+                /*performRequest(url + "/api/3", new RequestCallback() {
                     @Override
                     public void run(String response) {
                         Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
                         login(url1, userField.getText().toString(), pwdField.getText().toString());
                     }
-                });
+                });*/
+                login(url1, userField.getText().toString(), pwdField.getText().toString());
             }
         });
         vBox.setOrientation(LinearLayout.VERTICAL);
@@ -497,7 +477,6 @@ public class MainActivity extends Activity {
         this.token = token;
     }
 
-    //@SuppressLint("MissingSuperCall")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -505,7 +484,8 @@ public class MainActivity extends Activity {
         if (FileManager.exists(Constants.CREDENTIALSFILENAME)) {
             try {
                 BufferedReader input = new BufferedReader(new FileReader(FileManager.editFile(Constants.CREDENTIALSFILENAME)));
-                setUrl(input.readLine());
+                String temp = input.readLine();
+                setUrl(temp);
                 setToken(input.readLine());
             } catch (IOException e) {
                 e.printStackTrace();
