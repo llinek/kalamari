@@ -1,10 +1,10 @@
-package cz.llinek.kalamari;
+package cz.llinek.kalamari.dataTypes;
 
 import java.util.Date;
 
 public class Change {
     private String changeSubject;
-    private Date Day;
+    private Date day;
     private String hours;
     private String changeType;
     private String description;
@@ -14,7 +14,7 @@ public class Change {
 
     public Change(String changeSubject, Date day, String hours, String changeType, String description, String time, String typeAbbrev, String typeName) {
         this.changeSubject = changeSubject;
-        Day = day;
+        this.day = day;
         this.hours = hours;
         this.changeType = changeType;
         this.description = description;
@@ -32,11 +32,11 @@ public class Change {
     }
 
     public Date getDay() {
-        return Day;
+        return day;
     }
 
     public void setDay(Date day) {
-        Day = day;
+        this.day = day;
     }
 
     public String getHours() {

@@ -24,12 +24,19 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import cz.llinek.kalamari.dataTypes.Change;
+import cz.llinek.kalamari.dataTypes.Hour;
+import cz.llinek.kalamari.dataTypes.RequestCallback;
 
 public class MainActivity extends Activity {
     private String url;
     private String token;
+    private SimpleDateFormat timestampFormatter;
 
     private void performRequest(String appendix, RequestCallback runLater) {
         Thread thread = new Thread(new Runnable() {
@@ -70,11 +77,11 @@ public class MainActivity extends Activity {
                         response.append(connection.getResponseCode());
                         response.append(", ");
                         response.append(connection.getResponseMessage());
-                        System.err.println(response.toString());
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 Toast.makeText(MainActivity.this, "Wrong request", Toast.LENGTH_LONG).show();
+                                System.err.println(response.toString());
                             }
                         });
                     }
@@ -212,11 +219,11 @@ public class MainActivity extends Activity {
                             response.append(connection.getResponseCode());
                             response.append(", ");
                             response.append(connection.getResponseMessage());
-                            System.err.println(response.toString());
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     Toast.makeText(MainActivity.this, "Wrong login", Toast.LENGTH_LONG).show();
+                                    System.err.println(response.toString());
                                     loginScreen();
                                 }
                             });
@@ -322,7 +329,7 @@ public class MainActivity extends Activity {
         try {
             JSONObject rozvrh = new JSONObject(response);
             Toast.makeText(this, response, Toast.LENGTH_LONG).show();
-            System.err.println(response.replaceAll(",", ",\n"));
+            System.out.println(response.replaceAll(",", ",\n"));
             int minHours = -1;
             int maxHours = -1;
             int days = 0;
@@ -339,8 +346,36 @@ public class MainActivity extends Activity {
                     }
                 }
             }
+            Hour[][] hours = new Hour[maxHours - minHours][days];
+            for (int i = 0; i < hours.length; i++) {
+                for (int j = 0; j < hours[i].length; j++) {
+                    JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(j).getJSONArray("Atoms").getJSONObject(i);
+                    String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
+                    String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
+                    for (int k = 0; k < groupIds.length; k++) {
+                        groupIds[k] = hour.getJSONArray("GroupIds").getString(k);
+                    }
+                    for (int k = 0; k < cycleIds.length; k++) {
+                        cycleIds[k] = hour.getJSONArray("CycleIds").getString(k);
+                    }
+                    try {
+                        JSONObject c = hour.getJSONObject("Change");
+                        Change change = new Change(c.getString("ChangeSubject"), timestampFormatter.parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
+                        hours[i][j] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        runOnUiThread(() -> System.err.println("\n\n\nno change\n\n\n\n\n" + e.getMessage()));
+                        hours[i][j] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                        runOnUiThread(() -> System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage()));
+                        hours[i][j] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
+                    }
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
+            runOnUiThread(() -> System.err.println(e.getMessage()));
         }
     }
 
@@ -480,6 +515,12 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            System.err.println("null");
+        } else {
+            System.err.println(savedInstanceState.getString("url"));
+        }
+        timestampFormatter = new SimpleDateFormat(Constants.TIMESTAMP);
         FileManager.filesDir = getFilesDir();
         if (FileManager.exists(Constants.CREDENTIALSFILENAME)) {
             try {

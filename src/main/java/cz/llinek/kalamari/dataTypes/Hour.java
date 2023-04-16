@@ -1,15 +1,15 @@
-package cz.llinek.kalamari;
+package cz.llinek.kalamari.dataTypes;
 
 public class Hour {
     private int id;
     private String[] groupIds;
     private String teacherId;
     private String roomId;
-    private String cycleIds;
+    private String[] cycleIds;
     private Change change;
     private String theme;
 
-    public Hour(int id, String[] groupIds, String teacherId, String roomId, String cycleIds, Change change, String theme) {
+    public Hour(int id, String[] groupIds, String teacherId, String roomId, String[] cycleIds, Change change, String theme) {
         this.id = id;
         this.groupIds = groupIds;
         this.teacherId = teacherId;
@@ -51,11 +51,11 @@ public class Hour {
         this.roomId = roomId;
     }
 
-    public String getCycleIds() {
+    public String[] getCycleIds() {
         return cycleIds;
     }
 
-    public void setCycleIds(String cycleIds) {
+    public void setCycleIds(String[] cycleIds) {
         this.cycleIds = cycleIds;
     }
 
