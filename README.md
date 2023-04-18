@@ -1,5 +1,5 @@
 # Kalamari
-Kalamari **will** be an open-source alternative android client for [Bakalari](https://bakalari.cz/), but it's in the **early stages** of development and I don't have **much time** to work on it, so the first working version is not in sight.
+Kalamari **will** be an open-source alternative android client for [Bakalari](https://play.google.com/store/apps/details?id=cz.bakalari.mobile) school system, but it's in the **early stages** of development and I don't have **much time** to work on it, so the first working version is not in sight.
 ## Up ahead
 Planned features are:
 - **Faster** and better-looking UI and web communication
