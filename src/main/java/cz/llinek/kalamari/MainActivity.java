@@ -3,9 +3,9 @@ package cz.llinek.kalamari;
 import static cz.llinek.kalamari.Controller.getTimestampFormatter;
 import static cz.llinek.kalamari.Controller.login;
 import static cz.llinek.kalamari.Controller.onActivityStart;
-import static cz.llinek.kalamari.Controller.performRequest;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.KeyEvent;
@@ -27,7 +27,6 @@ import java.text.ParseException;
 
 import cz.llinek.kalamari.dataTypes.Change;
 import cz.llinek.kalamari.dataTypes.Hour;
-import cz.llinek.kalamari.dataTypes.RequestCallback;
 
 public class MainActivity extends Activity {
 
@@ -50,7 +49,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view) {
                 try {
-                    FileManager.deleteFile(Constants.CREDENTIALSFILENAME);
+                    FileManager.deleteFile(Constants.CREDENTIALS_FILENAME);
                     loginScreen();
                     runOnUiThread(new Runnable() {
                         @Override
@@ -76,12 +75,13 @@ public class MainActivity extends Activity {
         timetable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                performRequest(getApplicationContext(), "/api/3/timetable/permanent", new RequestCallback() {
+                /*performRequest(getApplicationContext(), "/api/3/timetable/permanent", new RequestCallback() {
                     @Override
                     public void run(String response) {
                         timetable(response);
                     }
-                });
+                });*/
+                startActivity(new Intent(getApplicationContext(), Timetable.class));
             }
         });
         marks.setMinHeight(100);
@@ -258,6 +258,7 @@ public class MainActivity extends Activity {
         pwdBox.addView(clearPwd);
         vBox.addView(urlField);
         vBox.addView(userField);
+        startActivity(new Intent(this, Timetable.class));
         vBox.addView(pwdBox);
         //vBox.addView(pwdField);
         vBox.addView(confirm);
@@ -270,7 +271,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         onActivityStart();
         Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
-        login(new Runnable() {
+        login(this, new Runnable() {
             @Override
             public void run() {
                 basicScreen();

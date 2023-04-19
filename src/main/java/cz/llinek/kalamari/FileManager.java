@@ -2,6 +2,7 @@ package cz.llinek.kalamari;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,7 +12,7 @@ public class FileManager {
 
     public static File editFile(String filename) throws IOException {
         if (!new File(filesDir, filename).exists()) {
-            File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+            File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
             if (!filesArray.exists()) {
                 filesArray.createNewFile();
             }
@@ -23,9 +24,29 @@ public class FileManager {
         return new File(filesDir, filename);
     }
 
+    public static String readFile(String filename) {
+        try {
+            if (new File(filesDir, filename).exists()) {
+                BufferedReader input = new BufferedReader(new FileReader(new File(filesDir, filename)));
+
+                StringBuilder in = new StringBuilder();
+                while (input.ready()) {
+                    in.append(input.readLine());
+                    in.append('\n');
+                }
+                return in.toString().substring(0, in.toString().length() - 1);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static void fileWrite(String filename, String content) throws IOException {
         if (!new File(filesDir, filename).exists()) {
-            File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+            File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
             if (!filesArray.exists()) {
                 filesArray.createNewFile();
             }
@@ -43,7 +64,7 @@ public class FileManager {
 
     public static void fileAppend(String filename, String content) throws IOException {
         if (!new File(filesDir, filename).exists()) {
-            File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+            File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
             if (!filesArray.exists()) {
                 filesArray.createNewFile();
             }
@@ -58,12 +79,15 @@ public class FileManager {
     }
 
     public static void deleteFile(String filename) throws IOException {
-        File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+        File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
         if (filesArray.exists()) {
             StringBuilder filesArrayContent = new StringBuilder();
             BufferedReader input = new BufferedReader(new FileReader(filesArray));
-            while (input.ready()) {
+            while (true) {
                 String temp = input.readLine();
+                if (temp == null) {
+                    break;
+                }
                 if (!temp.equals(filename)) {
                     filesArrayContent.append(temp);
                     filesArrayContent.append('\n');
@@ -79,12 +103,16 @@ public class FileManager {
     }
 
     public static boolean exists(String filename) {
-        File filesArray = new File(filesDir, Constants.FILESARRAYFILENAME);
+        File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
         if (filesArray.exists()) {
             try {
                 BufferedReader input = new BufferedReader(new FileReader(filesArray));
-                while (input.ready()) {
-                    if (input.readLine().contains(filename)) {
+                while (true) {
+                    String temp = input.readLine();
+                    if (temp == null) {
+                        break;
+                    }
+                    if (temp.contains(filename)) {
                         return true;
                     }
                 }
