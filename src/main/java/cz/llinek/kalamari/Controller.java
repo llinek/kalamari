@@ -77,10 +77,10 @@ public class Controller {
                     }
                 }
             }
-            Hour[][] hours = new Hour[maxHours - minHours][days];
-            for (int i = 0; i < hours.length; i++) {
-                for (int j = 0; j < hours[i].length; j++) {
-                    JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(j).getJSONArray("Atoms").getJSONObject(i);
+            Hour[][] hours = new Hour[days][maxHours - minHours];
+            for (int dayId = 0; dayId < hours.length; dayId++) {
+                for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
+                    JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms").getJSONObject(hourId);
                     String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
                     String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
                     for (int k = 0; k < groupIds.length; k++) {
@@ -92,15 +92,15 @@ public class Controller {
                     try {
                         JSONObject c = hour.getJSONObject("Change");
                         Change change = new Change(c.getString("ChangeSubject"), getTimestampFormatter().parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
-                        hours[i][j] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
+                        hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                         runOnUiThread(context, () -> System.err.println("\n\n\nno change\n\n\n\n\n" + e.getMessage()));
-                        hours[i][j] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
+                        hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
                     } catch (ParseException e) {
                         e.printStackTrace();
                         runOnUiThread(context, () -> System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage()));
-                        hours[i][j] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
+                        hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
                     }
                 }
             }
@@ -132,7 +132,7 @@ public class Controller {
                             response.append(temp);
                             temp = input.readLine();
                         }
-                        runOnUiThread(context, () -> runLater.run(response.toString());
+                        runOnUiThread(context, () -> runLater.run(response.toString()));
                         connection.disconnect();
                         input.close();
                     } else {

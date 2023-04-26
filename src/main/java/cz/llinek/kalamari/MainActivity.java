@@ -270,7 +270,6 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         onActivityStart();
-        Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
         login(this, new Runnable() {
             @Override
             public void run() {
