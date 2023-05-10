@@ -1,5 +1,6 @@
 package cz.llinek.kalamari;
 
+import static cz.llinek.kalamari.Controller.getSubjectById;
 import static cz.llinek.kalamari.Controller.updateTimetable;
 
 import android.app.Activity;
@@ -43,8 +44,22 @@ public class Timetable extends Activity {
             daybox.setOrientation(LinearLayout.HORIZONTAL);
             contentView.addView(daybox);
             for (Hour hour : row) {
+                if (hour == null) {
+                    Button hourButton = new Button(this);
+                    hourButton.setBackgroundColor(getResources().getColor(R.color.black));
+                    continue;
+                }
                 Button hourButton = new Button(this);
-                !!continue here
+                hourButton.setBackgroundColor(getResources().getColor(R.color.element_background));
+                hourButton.setText(getSubjectById(this, hour.getId()).getAbbrev());
+                hourButton.setTextSize(Constants.SUBJECT_TEXT_SIZE);
+                hourButton.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                hourButton.setMinHeight(Constants.TIMETABLE_CELL_SIZE);
+                hourButton.setMinWidth(Constants.TIMETABLE_CELL_SIZE);
+                if (hour.getChange() == null) {
+                    hourButton.setBackgroundColor(getResources().getColor(R.color.change));
+                }
+                daybox.addView(hourButton);
             }
         }
     }

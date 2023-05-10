@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,6 +23,7 @@ import javax.net.ssl.HttpsURLConnection;
 import cz.llinek.kalamari.dataTypes.Change;
 import cz.llinek.kalamari.dataTypes.Hour;
 import cz.llinek.kalamari.dataTypes.RequestCallback;
+import cz.llinek.kalamari.dataTypes.Subject;
 
 public class Controller {
     private static String url;
@@ -47,6 +49,27 @@ public class Controller {
     public static void runOnUiThread(Context context, Runnable run) {
         Handler mainHandler = new Handler(context.getMainLooper());
         mainHandler.post(run);
+    }
+    public static Subject getSubjectById(Context context, int id) {
+        String response;
+        if (FileManager.exists(Constants.TIMETABLE_FILENAME)) {
+            response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
+        } else {
+            updateTimetable(context);
+            response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
+        }
+        try {
+            JSONArray subjects = new JSONObject(response).getJSONArray("Subjects");
+            for (int i = 0; i < subjects.length(); i++) {
+                JSONObject subject = subjects.getJSONObject(i);
+                if (subject.getInt("Id") == id) {
+                    return new Subject(subject.getInt("Id"), subject.getString("Abbrev"), subject.getString("Name"));
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static Hour[][] parseTimetable(Context context) {
@@ -79,7 +102,7 @@ public class Controller {
             }
             Hour[][] hours = new Hour[days][maxHours - minHours];
             for (int dayId = 0; dayId < hours.length; dayId++) {
-                for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
+                /*for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
                     JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms").getJSONObject(hourId);
                     String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
                     String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
@@ -101,6 +124,31 @@ public class Controller {
                         e.printStackTrace();
                         runOnUiThread(context, () -> System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage()));
                         hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
+                    }
+                }*/
+                JSONArray atoms = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms");
+                for (int i = 0; i < atoms.length(); i++) {
+                    JSONObject hour = atoms.getJSONObject(i);
+                    String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
+                    String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
+                    for (int k = 0; k < groupIds.length; k++) {
+                        groupIds[k] = hour.getJSONArray("GroupIds").getString(k);
+                    }
+                    for (int k = 0; k < cycleIds.length; k++) {
+                        cycleIds[k] = hour.getJSONArray("CycleIds").getString(k);
+                    }
+                    try {
+                        JSONObject c = hour.getJSONObject("Change");
+                        Change change = new Change(c.getString("ChangeSubject"), getTimestampFormatter().parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
+                        hours[dayId][hour.getInt("HourId") - minHours] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        runOnUiThread(context, () -> System.err.println("\n\n\nno change\n\n\n\n\n" + e.getMessage()));
+                        hours[dayId][hour.getInt("HourId") - minHours] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                        runOnUiThread(context, () -> System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage()));
+                        hours[dayId][hour.getInt("HourId") - minHours] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
                     }
                 }
             }
