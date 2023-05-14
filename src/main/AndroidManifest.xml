@@ -27,6 +27,22 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
+        <activity
+            android:name="cz.llinek.kalamari.LoginScreen"
+            android:exported="true"
+            android:theme="@style/Theme.MyApplication.NoActionBar">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name="cz.llinek.kalamari.Timetable"
+            android:exported="true"
+            android:theme="@style/Theme.MyApplication.NoActionBar">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 

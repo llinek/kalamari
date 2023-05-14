@@ -3,7 +3,6 @@ package cz.llinek.kalamari;
 import static cz.llinek.kalamari.Controller.login;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.KeyEvent;
@@ -128,18 +127,16 @@ public class LoginScreen extends Activity {
         pwdBox.addView(clearPwd);
         vBox.addView(urlField);
         vBox.addView(userField);
-        startActivity(new Intent(this, Timetable.class));
         vBox.addView(pwdBox);
         //vBox.addView(pwdField);
         vBox.addView(confirm);
         vBox.addView(schoolList);
         this.setContentView(vBox);
-        !!continue here
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        loginScreen();
     }
 }

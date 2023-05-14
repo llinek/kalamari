@@ -7,16 +7,9 @@ import static cz.llinek.kalamari.Controller.onActivityStart;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.InputType;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -50,7 +43,7 @@ public class MainActivity extends Activity {
             public void onClick(View view) {
                 try {
                     FileManager.deleteFile(Constants.CREDENTIALS_FILENAME);
-                    loginScreen();
+                    startActivity(new Intent(getApplicationContext(), LoginScreen.class));
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -148,7 +141,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void loginScreen() {
+    /*private void loginScreen() {
         EditText urlField = new EditText(this);
         EditText userField = new EditText(this);
         EditText pwdField = new EditText(this);
@@ -199,13 +192,6 @@ public class MainActivity extends Activity {
                     url = "https://" + url;
                 }
                 final String url1 = url;
-                /*performRequest(url + "/api/3", new RequestCallback() {
-                    @Override
-                    public void run(String response) {
-                        Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
-                        login(url1, userField.getText().toString(), pwdField.getText().toString());
-                    }
-                });*/
                 login(getApplicationContext(), url1, userField.getText().toString(), pwdField.getText().toString());
             }
         });
@@ -264,10 +250,11 @@ public class MainActivity extends Activity {
         vBox.addView(confirm);
         vBox.addView(schoolList);
         this.setContentView(vBox);
-    }
+    }*/
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        FileManager.filesDir = getFilesDir();
         super.onCreate(savedInstanceState);
         onActivityStart();
         login(this, new Runnable() {

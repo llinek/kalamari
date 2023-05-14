@@ -1,7 +1,9 @@
 package cz.llinek.kalamari;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -50,6 +52,7 @@ public class Controller {
         Handler mainHandler = new Handler(context.getMainLooper());
         mainHandler.post(run);
     }
+
     public static Subject getSubjectById(Context context, int id) {
         String response;
         if (FileManager.exists(Constants.TIMETABLE_FILENAME)) {
@@ -72,8 +75,9 @@ public class Controller {
         return null;
     }
 
-    public static Hour[][] parseTimetable(Context context) {
+    public static Hour[][] parseHours(Context context) {
         String response;
+        Hour[][] hours = null;
         if (FileManager.exists(Constants.TIMETABLE_FILENAME)) {
             response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
         } else {
@@ -100,7 +104,7 @@ public class Controller {
                     }
                 }
             }
-            Hour[][] hours = new Hour[days][maxHours - minHours];
+            hours = new Hour[days][maxHours - minHours];
             for (int dayId = 0; dayId < hours.length; dayId++) {
                 /*for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
                     JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms").getJSONObject(hourId);
@@ -152,12 +156,11 @@ public class Controller {
                     }
                 }
             }
-            return hours;
         } catch (JSONException e) {
             e.printStackTrace();
             runOnUiThread(context, () -> System.err.println(e.getMessage()));
         }
-        return null;
+        return hours;
     }
 
     public static void performRequest(Context context, String appendix, RequestCallback runLater) {
@@ -199,6 +202,10 @@ public class Controller {
                             System.err.println(response.toString());
                         });
                     }
+                } catch (IOException e) {
+                    Looper.prepare();
+                    Toast.makeText(context, "network error", Toast.LENGTH_SHORT).show();
+                    runLater.run(null);
                 } catch (Throwable e) {
                     runOnUiThread(context, () -> {
                         Toast.makeText(context, "Exception", Toast.LENGTH_SHORT).show();
@@ -206,7 +213,8 @@ public class Controller {
                     });
                 }
             }
-        }); thread.setDaemon(true);
+        });
+        thread.setDaemon(true);
         thread.start();
     }
 
@@ -282,7 +290,9 @@ public class Controller {
                         setToken(res.getString("access_token"));
                         FileManager.fileWrite(Constants.CREDENTIALS_FILENAME, url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
                         runOnUiThread(context, () -> {
-                            basicScreen();
+                            Intent intent = new Intent(context, MainActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(intent);
                         });
                     }
                 } catch (Throwable e) {
@@ -350,7 +360,7 @@ public class Controller {
                             runOnUiThread(context, () -> {
                                 Toast.makeText(context, "Wrong login", Toast.LENGTH_LONG).show();
                                 System.err.println(response.toString());
-                                loginScreen();
+                                context.startActivity(new Intent(context, LoginScreen.class));
                             });
                         }
 
@@ -377,7 +387,7 @@ public class Controller {
             thread.start();
         } else {
             Toast.makeText(context, "else", Toast.LENGTH_SHORT).show();
-            loginScreen();
+            context.startActivity(new Intent(context, LoginScreen.class));
         }
     }
 

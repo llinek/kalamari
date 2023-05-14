@@ -16,8 +16,9 @@ public class FileManager {
             if (!filesArray.exists()) {
                 filesArray.createNewFile();
             }
+            String filePrefix = readFile(Constants.FILES_ARRAY_FILENAME);
             FileWriter writer = new FileWriter(filesArray);
-            writer.append(filename + "\n");
+            writer.append(filePrefix + filename + "\n");
             writer.close();
             new File(filesDir, filename).createNewFile();
         }
@@ -34,7 +35,10 @@ public class FileManager {
                     in.append(input.readLine());
                     in.append('\n');
                 }
-                return in.toString().substring(0, in.toString().length() - 1);
+                if (in.toString().length() > 1) {
+                    return in.toString().substring(0, in.toString().length() - 1);
+                }
+                return null;
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -48,10 +52,12 @@ public class FileManager {
         if (!new File(filesDir, filename).exists()) {
             File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
             if (!filesArray.exists()) {
+                System.err.println(filesArray.getAbsolutePath());
                 filesArray.createNewFile();
             }
+            String filePrefix = readFile(Constants.FILES_ARRAY_FILENAME);
             FileWriter writer = new FileWriter(filesArray);
-            writer.append(filename + "\n");
+            writer.append(filePrefix + filename + "\n");
             writer.close();
             new File(filesDir, filename).createNewFile();
         }
@@ -68,13 +74,15 @@ public class FileManager {
             if (!filesArray.exists()) {
                 filesArray.createNewFile();
             }
+            String filePrefix = readFile(Constants.FILES_ARRAY_FILENAME);
             FileWriter writer = new FileWriter(filesArray);
-            writer.append(filename + "\n");
+            writer.append(filePrefix + filename + "\n");
             writer.close();
             new File(filesDir, filename).createNewFile();
         }
+        String filePrefix = readFile(filename);
         FileWriter output = new FileWriter(new File(filesDir, filename));
-        output.write(content);
+        output.write(filePrefix + content);
         output.close();
     }
 
