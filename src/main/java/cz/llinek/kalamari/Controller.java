@@ -175,9 +175,11 @@ public class Controller {
                         System.err.println(response.toString());
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
                     System.err.println(e.getMessage());
                     runLater.run(null);
                 } catch (Throwable e) {
+                    e.printStackTrace();
                     System.err.println(e.getMessage());
                 }
             }
@@ -188,6 +190,7 @@ public class Controller {
             try {
                 thread.join(runLater.join());
             } catch (InterruptedException e) {
+                e.printStackTrace();
                 System.err.println(e.getMessage());
             }
         }
@@ -230,9 +233,11 @@ public class Controller {
                         System.err.println(response.toString());
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
                     System.err.println(e.getMessage());
                     runLater.run(null);
                 } catch (Throwable e) {
+                    e.printStackTrace();
                     System.err.println(e.getMessage());
                 }
             }
@@ -243,6 +248,7 @@ public class Controller {
             try {
                 thread.join(runLater.join());
             } catch (InterruptedException e) {
+                e.printStackTrace();
                 System.err.println(e.getMessage());
             }
         }
@@ -372,10 +378,10 @@ public class Controller {
                         if (apis.length() > 0) {
                             if (apis.getJSONObject(0).getString("ApiVersion") != null) {
                                 result[0] = true;
-                                System.err.println(apis.getJSONObject(0).getString("ApiVersion"));
                             }
                         }
                     } catch (JSONException e) {
+                        e.printStackTrace();
                         System.err.println(e.getMessage());
                     }
                 }

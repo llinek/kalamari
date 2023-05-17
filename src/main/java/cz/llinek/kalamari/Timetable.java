@@ -10,8 +10,11 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.view.menu.MenuBuilder;
@@ -57,6 +60,7 @@ public class Timetable extends Activity {
             LinearLayout contentView = new LinearLayout(this);
             MaterialToolbar toolbar = new MaterialToolbar(this);
             @SuppressLint("RestrictedApi") MenuBuilder menu = new MenuBuilder(this);
+            HorizontalScrollView timetableScroll = new HorizontalScrollView(this);
             LinearLayout timetableView = new LinearLayout(this);
             ImageButton reloadButton = new ImageButton(this);
             ImageButton backButton = new ImageButton(this);
@@ -64,7 +68,7 @@ public class Timetable extends Activity {
             contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.addView(toolbar);
             MaterialButton butt;
-            contentView.addView(timetableView);
+            contentView.addView(timetableScroll);
             toolbar.setNavigationIcon(R.drawable.outline_arrow_back_24);
             toolbar.setNavigationOnClickListener(v -> finish());
 
@@ -81,7 +85,9 @@ public class Timetable extends Activity {
                 }
             });
             MaterialToolbar.LayoutParams backLayoutParams = new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT);
-            timetableView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+            timetableScroll.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+            timetableScroll.addView(timetableView);
+            timetableView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
             timetableView.setOrientation(LinearLayout.VERTICAL);
             reloadButton.setBackgroundResource(R.drawable.outline_refresh_24);
             reloadButton.setOnClickListener(new View.OnClickListener() {

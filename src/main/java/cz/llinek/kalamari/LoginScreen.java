@@ -104,9 +104,7 @@ public class LoginScreen extends Activity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (checkSchoolUrl(parseUrl(/*urlEditText.getText().toString())*/s.toString()))) {
                     urlField.setErrorEnabled(false);
-                    System.err.println("if");
                 } else {
-                    System.err.println("else");
                     urlField.setError("Url doesn't work.");
                     userField.setErrorEnabled(false);
                     pwdField.setErrorEnabled(false);

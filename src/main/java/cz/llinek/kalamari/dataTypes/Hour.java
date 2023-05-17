@@ -1,5 +1,6 @@
 package cz.llinek.kalamari.dataTypes;
 
+import static cz.llinek.kalamari.Controller.dpToPx;
 import static cz.llinek.kalamari.Controller.getTimestampFormatter;
 
 import android.content.Context;
@@ -70,6 +71,8 @@ public class Hour {
         try {
             String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
             String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
+            groupAbbrevs = new String[groupIds.length];
+            groupNames = new String[groupIds.length];
             for (int k = 0; k < groupIds.length; k++) {
                 groupIds[k] = hour.getJSONArray("GroupIds").getString(k);
             }
@@ -121,17 +124,19 @@ public class Hour {
                 if (subject.getString("Id").equals(subjectId)) {
                     subjectAbbrev = subject.getString("Abbrev");
                     subjectName = subject.getString("Name");
+                    break;
                 }
             }
             for (int i = 0; i < teachers.length(); i++) {
-                JSONObject teacher = subjects.getJSONObject(i);
+                JSONObject teacher = teachers.getJSONObject(i);
                 if (teacher.getString("Id").equals(teacherId)) {
                     teacherAbbrev = teacher.getString("Abbrev");
                     teacherName = teacher.getString("Name");
+                    break;
                 }
             }
             for (int i = 0; i < groups.length(); i++) {
-                JSONObject group = subjects.getJSONObject(i);
+                JSONObject group = groups.getJSONObject(i);
                 for (int j = 0; j < getGroupIds().length; j++) {
                     if (group.getString("Id").equals(getGroupIds()[j])) {
                         groupAbbrevs[j] = group.getString("Abbrev");
@@ -148,6 +153,7 @@ public class Hour {
                 }
             }
         } catch (JSONException e) {
+            e.printStackTrace();
             System.err.println(e.getMessage());
         }
         this.context = context;
@@ -175,20 +181,23 @@ public class Hour {
         teacher.setText(getTeacherAbbrev());
         teacher.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_TEACHER_DP));
         teacher.setGravity(Gravity.CENTER);
-        teacher.setLayoutParams(subjectLayout);
+        teacher.setLayoutParams(teacherLayout);
         if (getGroupAbbrevs() != null) {
             StringBuilder groupText = new StringBuilder();
             for (int i = 0; i < getGroupAbbrevs().length; i++) {
                 groupText.append(getGroupAbbrevs()[i]);
-                groupText.append(", ");
+                if (i + 1 < getGroupAbbrevs().length) {
+                    groupText.append(", ");
+                }
             }
-            group.setText(groupText.substring(0, groupText.length() - 3));
+            group.setText(groupText.toString());
         }
         group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_GROUP_DP));
         group.setGravity(Gravity.CENTER);
-        group.setLayoutParams(subjectLayout);
+        group.setLayoutParams(groupLayout);
         layout.setMinimumWidth(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setMinimumHeight(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
+        layout.setPadding(dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP));
         layout.addView(subject);
         layout.addView(teacher);
         layout.addView(group);
@@ -235,12 +244,13 @@ public class Hour {
         return groupIds;
     }
 
-    public String getTeacherAbbrev() {
-        return teacherAbbrev;
+    public void setGroupIds(String[] groupIds) {
+        this.groupIds = groupIds;
+        updateView();
     }
 
-    public String getTeacherId() {
-        return teacherId;
+    public String getTeacherAbbrev() {
+        return teacherAbbrev;
     }
 
     public void setTeacherAbbrev(String teacherAbbrev) {
@@ -248,34 +258,8 @@ public class Hour {
         updateView();
     }
 
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public int getHourId() {
-        return hourId;
-    }
-
-    public String[] getCycleIds() {
-        return cycleIds;
-    }
-
-    public void setHourId(int hourId) {
-        this.hourId = hourId;
-        updateView();
-    }
-
-    public Change getChange() {
-        return change;
-    }
-
-    public void setGroupIds(String[] groupIds) {
-        this.groupIds = groupIds;
-        updateView();
-    }
-
-    public String getTheme() {
-        return theme;
+    public String getTeacherId() {
+        return teacherId;
     }
 
     public void setTeacherId(String teacherId) {
@@ -283,9 +267,26 @@ public class Hour {
         updateView();
     }
 
+    public String getRoomId() {
+        return roomId;
+    }
+
     public void setRoomId(String roomId) {
         this.roomId = roomId;
         updateView();
+    }
+
+    public int getHourId() {
+        return hourId;
+    }
+
+    public void setHourId(int hourId) {
+        this.hourId = hourId;
+        updateView();
+    }
+
+    public String[] getCycleIds() {
+        return cycleIds;
     }
 
     public void setCycleIds(String[] cycleIds) {
@@ -293,9 +294,17 @@ public class Hour {
         updateView();
     }
 
+    public Change getChange() {
+        return change;
+    }
+
     public void setChange(Change change) {
         this.change = change;
         updateView();
+    }
+
+    public String getTheme() {
+        return theme;
     }
 
     public void setTheme(String theme) {
