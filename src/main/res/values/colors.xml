@@ -10,7 +10,7 @@
     <color name="element_background">#FF0A2664</color>
     <color name="change">#FF74233c</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="drawable_default">#FFFFFFFF</color>
+    <color name="drawable_default">#FF000000</color>
 
 
     <color name="seed">#2645cd</color>

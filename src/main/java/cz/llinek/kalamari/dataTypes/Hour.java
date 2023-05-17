@@ -30,9 +30,8 @@ public class Hour {
     private String teacherId;
     private String teacherAbbrev;
     private String teacherName;
-    private String groupId;
-    private String groupAbbrev;
-    private String groupName;
+    private String[] groupAbbrevs;
+    private String[] groupNames;
     private String classId;
     private String classAbbrev;
     private String className;
@@ -45,7 +44,7 @@ public class Hour {
     private Context context;
 
     public Hour(Context context) {
-        this.hourId = -1;
+        /*this.hourId = -1;
         this.groupIds = new String[]{};
         this.subjectId = "";
         this.subjectAbbrev = "";
@@ -53,7 +52,6 @@ public class Hour {
         this.teacherId = "";
         this.teacherAbbrev = "";
         this.teacherName = "";
-        this.groupId = "";
         this.groupAbbrev = "";
         this.groupName = "";
         this.classId = "";
@@ -63,7 +61,7 @@ public class Hour {
         this.cycleIds = new String[]{};
         this.change = null;
         this.theme = "";
-        this.timetableFilename = "";
+        this.timetableFilename = "";*/
         this.context = context;
         updateView();
     }
@@ -134,10 +132,12 @@ public class Hour {
             }
             for (int i = 0; i < groups.length(); i++) {
                 JSONObject group = subjects.getJSONObject(i);
-                if (group.getString("Id").equals(groupId)) {
-                    groupAbbrev = group.getString("Abbrev");
-                    groupName = group.getString("Name");
-                    classId = group.getString("ClassId");
+                for (int j = 0; j < getGroupIds().length; j++) {
+                    if (group.getString("Id").equals(getGroupIds()[j])) {
+                        groupAbbrevs[j] = group.getString("Abbrev");
+                        groupNames[j] = group.getString("Name");
+                        classId = group.getString("ClassId");
+                    }
                 }
             }
             for (int i = 0; i < classes.length(); i++) {
@@ -176,13 +176,22 @@ public class Hour {
         teacher.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_TEACHER_DP));
         teacher.setGravity(Gravity.CENTER);
         teacher.setLayoutParams(subjectLayout);
-        group.setText(getGroupIds().toString());
-        group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_TEACHER_DP));
+        if (getGroupAbbrevs() != null) {
+            StringBuilder groupText = new StringBuilder();
+            for (int i = 0; i < getGroupAbbrevs().length; i++) {
+                groupText.append(getGroupAbbrevs()[i]);
+                groupText.append(", ");
+            }
+            group.setText(groupText.substring(0, groupText.length() - 3));
+        }
+        group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_GROUP_DP));
         group.setGravity(Gravity.CENTER);
         group.setLayoutParams(subjectLayout);
         layout.setMinimumWidth(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setMinimumHeight(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.addView(subject);
+        layout.addView(teacher);
+        layout.addView(group);
         layout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         view = layout;
     }
@@ -294,25 +303,21 @@ public class Hour {
         updateView();
     }
 
-    public String getGroupId() {
-        return groupId;
+    public String[] getGroupAbbrevs() {
+        return groupAbbrevs;
     }
 
-    public String getGroupAbbrev() {
-        return groupAbbrev;
-    }
-
-    public void setGroupAbbrev(String groupAbbrev) {
-        this.groupAbbrev = groupAbbrev;
+    public void setGroupAbbrevs(String[] groupAbbrevs) {
+        this.groupAbbrevs = groupAbbrevs;
         updateView();
     }
 
-    public String getGroupName() {
-        return groupName;
+    public String[] getGroupNames() {
+        return groupNames;
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
+    public void setGroupNames(String[] groupNames) {
+        this.groupNames = groupNames;
         updateView();
     }
 
