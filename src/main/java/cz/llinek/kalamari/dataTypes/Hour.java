@@ -7,6 +7,8 @@ import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.material.textview.MaterialTextView;
 
 import org.json.JSONArray;
@@ -42,7 +44,31 @@ public class Hour {
     private FrameLayout view;
     private Context context;
 
-    public Hour(Context context, JSONObject hour, String timetableFilename) {
+    public Hour(Context context) {
+        this.hourId = -1;
+        this.groupIds = new String[]{};
+        this.subjectId = "";
+        this.subjectAbbrev = "";
+        this.subjectName = "";
+        this.teacherId = "";
+        this.teacherAbbrev = "";
+        this.teacherName = "";
+        this.groupId = "";
+        this.groupAbbrev = "";
+        this.groupName = "";
+        this.classId = "";
+        this.classAbbrev = "";
+        this.className = "";
+        this.roomId = "";
+        this.cycleIds = new String[]{};
+        this.change = null;
+        this.theme = "";
+        this.timetableFilename = "";
+        this.context = context;
+        updateView();
+    }
+
+    public Hour(@NonNull Context context, JSONObject hour, String timetableFilename) {
         try {
             String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
             String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
@@ -65,8 +91,6 @@ public class Hour {
                 this.theme = hour.getString("Theme");
                 this.timetableFilename = timetableFilename;
             } catch (JSONException e) {
-                System.err.println(e.getMessage());
-                System.err.println("\n\n\nno change\n\n\n\n\n" + e.getMessage());
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
                 this.teacherId = hour.getString("TeacherId");
@@ -77,7 +101,7 @@ public class Hour {
                 this.theme = hour.getString("Theme");
                 this.timetableFilename = timetableFilename;
             } catch (ParseException e) {
-                System.err.println(e.getMessage());
+                e.printStackTrace();
                 System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage());
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;

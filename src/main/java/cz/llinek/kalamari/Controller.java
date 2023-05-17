@@ -23,7 +23,6 @@ import javax.net.ssl.HttpsURLConnection;
 
 import cz.llinek.kalamari.dataTypes.Hour;
 import cz.llinek.kalamari.dataTypes.RequestCallback;
-import cz.llinek.kalamari.dataTypes.Subject;
 
 public class Controller {
     private static String url;
@@ -65,27 +64,6 @@ public class Controller {
         mainHandler.post(run);
     }
 
-    public static Subject getSubjectById(Context context, int id) {
-        String response;
-        if (FileManager.exists(Constants.PERMANENT_TIMETABLE_FILENAME)) {
-            response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
-        } else {
-            updateTimetable(context);
-            response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
-        }
-        try {
-            JSONArray subjects = new JSONObject(response).getJSONArray("Subjects");
-            for (int i = 0; i < subjects.length(); i++) {
-                JSONObject subject = subjects.getJSONObject(i);
-                if (subject.getInt("Id") == id) {
-                    return new Subject(subject.getInt("Id"), subject.getString("Abbrev"), subject.getString("Name"));
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     public static Hour[][] parsePermanentHours(Context context) {
         String response;
@@ -98,15 +76,13 @@ public class Controller {
         }
         try {
             JSONObject rozvrh = new JSONObject(response);
-            runOnUiThread(context, () -> Toast.makeText(context, response, Toast.LENGTH_LONG).show());
-            System.out.println(response.replaceAll(",", ",\n"));
             int minHours = -1;
             int maxHours = -1;
             int days = 0;
-            for (int i = rozvrh.getJSONArray("Days").length(); i < 0; i--) {
+            for (int i = rozvrh.getJSONArray("Days").length() - 1; i >= 0; i--) {
                 if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length() > 0) {
                     days++;
-                    for (int j = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length(); j > 0; j--) {
+                    for (int j = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length() - 1; j >= 0; j--) {
                         if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId") < minHours || minHours == -1) {
                             minHours = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId");
                         }
@@ -116,7 +92,9 @@ public class Controller {
                     }
                 }
             }
-            hours = new Hour[days][maxHours - minHours];
+            System.out.println(minHours);
+            System.out.println(maxHours);
+            hours = new Hour[days][maxHours - minHours + 1];
             for (int dayId = 0; dayId < hours.length; dayId++) {
                 /*for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
                     JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms").getJSONObject(hourId);
@@ -146,6 +124,7 @@ public class Controller {
                 for (int i = 0; i < atoms.length(); i++) {
                     JSONObject hour = atoms.getJSONObject(i);
                     hours[dayId][hour.getInt("HourId") - minHours] = new Hour(context, hour, Constants.PERMANENT_TIMETABLE_FILENAME);
+                    System.out.println("inhourfor");
                 }
             }
         } catch (JSONException e) {

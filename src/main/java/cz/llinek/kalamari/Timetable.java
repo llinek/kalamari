@@ -124,11 +124,16 @@ public class Timetable extends Activity {
                     daybox.addView(hourButton);
                 }*/
                 for (Hour hour : row) {
-                    daybox.addView(hour.getView());
+                    if (hour != null) {
+                        daybox.addView(hour.getView());
+                    } else {
+                        daybox.addView(new Hour(this).getView());
+                    }
                 }
             }
             setContentView(contentView);
         } catch (NullPointerException e) {
+            e.printStackTrace();
             showEmptyTimetable();
             return;
         }
