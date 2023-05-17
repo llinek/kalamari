@@ -3,7 +3,7 @@ package cz.llinek.kalamari;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
-import android.os.Looper;
+import android.util.TypedValue;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -17,12 +17,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import cz.llinek.kalamari.dataTypes.Change;
 import cz.llinek.kalamari.dataTypes.Hour;
 import cz.llinek.kalamari.dataTypes.RequestCallback;
 import cz.llinek.kalamari.dataTypes.Subject;
@@ -31,19 +29,33 @@ public class Controller {
     private static String url;
     private static String token;
     private static SimpleDateFormat timestampFormatter;
+    private static Hour clickedHour;
+
+    public static Hour getClickedHour() {
+        return clickedHour;
+    }
+
+    public static void setClickedHour(Hour clickedHour) {
+        Controller.clickedHour = clickedHour;
+    }
 
     public static void updateTimetable(Context context) {
-        performRequest(context, "/api/3/timetable/permanent", new RequestCallback() {
+        performRequest("/api/3/timetable/permanent", new RequestCallback() {
             @Override
             public void run(String response) {
                 if (response != null) {
                     try {
-                        FileManager.fileWrite(Constants.TIMETABLE_FILENAME, response);
+                        FileManager.fileWrite(Constants.PERMANENT_TIMETABLE_FILENAME, response);
                     } catch (IOException e) {
                         e.printStackTrace();
                         runOnUiThread(context, () -> System.err.println(e.getMessage()));
                     }
                 }
+            }
+
+            @Override
+            public int join() {
+                return 5000;
             }
         });
     }
@@ -55,11 +67,11 @@ public class Controller {
 
     public static Subject getSubjectById(Context context, int id) {
         String response;
-        if (FileManager.exists(Constants.TIMETABLE_FILENAME)) {
-            response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
+        if (FileManager.exists(Constants.PERMANENT_TIMETABLE_FILENAME)) {
+            response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
         } else {
             updateTimetable(context);
-            response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
+            response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
         }
         try {
             JSONArray subjects = new JSONObject(response).getJSONArray("Subjects");
@@ -75,14 +87,14 @@ public class Controller {
         return null;
     }
 
-    public static Hour[][] parseHours(Context context) {
+    public static Hour[][] parsePermanentHours(Context context) {
         String response;
         Hour[][] hours = null;
-        if (FileManager.exists(Constants.TIMETABLE_FILENAME)) {
-            response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
+        if (FileManager.exists(Constants.PERMANENT_TIMETABLE_FILENAME)) {
+            response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
         } else {
             updateTimetable(context);
-            response = FileManager.readFile(Constants.TIMETABLE_FILENAME);
+            response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
         }
         try {
             JSONObject rozvrh = new JSONObject(response);
@@ -133,27 +145,7 @@ public class Controller {
                 JSONArray atoms = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms");
                 for (int i = 0; i < atoms.length(); i++) {
                     JSONObject hour = atoms.getJSONObject(i);
-                    String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
-                    String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
-                    for (int k = 0; k < groupIds.length; k++) {
-                        groupIds[k] = hour.getJSONArray("GroupIds").getString(k);
-                    }
-                    for (int k = 0; k < cycleIds.length; k++) {
-                        cycleIds[k] = hour.getJSONArray("CycleIds").getString(k);
-                    }
-                    try {
-                        JSONObject c = hour.getJSONObject("Change");
-                        Change change = new Change(c.getString("ChangeSubject"), getTimestampFormatter().parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
-                        hours[dayId][hour.getInt("HourId") - minHours] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        runOnUiThread(context, () -> System.err.println("\n\n\nno change\n\n\n\n\n" + e.getMessage()));
-                        hours[dayId][hour.getInt("HourId") - minHours] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                        runOnUiThread(context, () -> System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage()));
-                        hours[dayId][hour.getInt("HourId") - minHours] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
-                    }
+                    hours[dayId][hour.getInt("HourId") - minHours] = new Hour(context, hour, Constants.PERMANENT_TIMETABLE_FILENAME);
                 }
             }
         } catch (JSONException e) {
@@ -163,7 +155,11 @@ public class Controller {
         return hours;
     }
 
-    public static void performRequest(Context context, String appendix, RequestCallback runLater) {
+    public static int dpToPx(Context context, float dp) {
+        return (int) (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics()) + 0.5f);
+    }
+
+    public static void performRequest(String appendix, RequestCallback runLater) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -183,7 +179,7 @@ public class Controller {
                             response.append(temp);
                             temp = input.readLine();
                         }
-                        runOnUiThread(context, () -> runLater.run(response.toString()));
+                        runLater.run(response.toString());
                         connection.disconnect();
                         input.close();
                     } else {
@@ -197,25 +193,80 @@ public class Controller {
                         response.append(connection.getResponseCode());
                         response.append(", ");
                         response.append(connection.getResponseMessage());
-                        runOnUiThread(context, () -> {
-                            Toast.makeText(context, "Wrong request", Toast.LENGTH_LONG).show();
-                            System.err.println(response.toString());
-                        });
+                        System.err.println(response.toString());
                     }
                 } catch (IOException e) {
-                    Looper.prepare();
-                    Toast.makeText(context, "network error", Toast.LENGTH_SHORT).show();
+                    System.err.println(e.getMessage());
                     runLater.run(null);
                 } catch (Throwable e) {
-                    runOnUiThread(context, () -> {
-                        Toast.makeText(context, "Exception", Toast.LENGTH_SHORT).show();
-                        e.printStackTrace();
-                    });
+                    System.err.println(e.getMessage());
                 }
             }
         });
         thread.setDaemon(true);
         thread.start();
+        if (runLater.join() != -1) {
+            try {
+                thread.join(runLater.join());
+            } catch (InterruptedException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }
+
+    public static void performRequest(String url, String appendix, RequestCallback runLater) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    StringBuilder response = new StringBuilder();
+                    HttpsURLConnection connection = (HttpsURLConnection) new URL(url + appendix).openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setDoInput(true);
+                    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                    connection.setRequestProperty("Authorization", "Bearer " + getToken());
+                    System.out.println(getToken());
+                    connection.connect();
+                    if (connection.getErrorStream() == null) {
+                        BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        String temp = input.readLine();
+                        while (temp != null) {
+                            response.append(temp);
+                            temp = input.readLine();
+                        }
+                        runLater.run(response.toString());
+                        connection.disconnect();
+                        input.close();
+                    } else {
+                        BufferedReader input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                        String temp = input.readLine();
+                        while (temp != null) {
+                            response.append(temp);
+                            temp = input.readLine();
+                        }
+                        response.append("Error: ");
+                        response.append(connection.getResponseCode());
+                        response.append(", ");
+                        response.append(connection.getResponseMessage());
+                        System.err.println(response.toString());
+                    }
+                } catch (IOException e) {
+                    System.err.println(e.getMessage());
+                    runLater.run(null);
+                } catch (Throwable e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+        if (runLater.join() != -1) {
+            try {
+                thread.join(runLater.join());
+            } catch (InterruptedException e) {
+                System.err.println(e.getMessage());
+            }
+        }
     }
 
     public static String getUrl() {
@@ -246,7 +297,22 @@ public class Controller {
 
     }
 
-    public static void login(Context context, String url, String user, String pwd) {
+    public static void clearCredentials() {
+        setToken(null);
+        setUrl(null);
+    }
+
+    public static void updateCredentials() {
+
+    }
+
+    public static void logout() {
+        clearCredentials();
+        FileManager.deleteDirContents(Constants.USERDATA_DIRECTORY);
+    }
+
+    public static boolean login(Context context, String url, String user, String pwd) {
+        final boolean[] result = {false};
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -289,11 +355,12 @@ public class Controller {
                         setUrl(url);
                         setToken(res.getString("access_token"));
                         FileManager.fileWrite(Constants.CREDENTIALS_FILENAME, url + '\n' + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
-                        runOnUiThread(context, () -> {
+                        /*runOnUiThread(context, () -> {
                             Intent intent = new Intent(context, MainActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             context.startActivity(intent);
-                        });
+                        });*/
+                        result[0] = true;
                     }
                 } catch (Throwable e) {
                     runOnUiThread(context, () -> {
@@ -306,6 +373,52 @@ public class Controller {
         });
         thread.setDaemon(true);
         thread.start();
+        try {
+            thread.join(3000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return result[0];
+    }
+
+    public static boolean checkSchoolUrl(String url) {
+        final boolean[] result = {false};
+        performRequest(url, "/api", new RequestCallback() {
+            @Override
+            public void run(String response) {
+                if (response != null) {
+                    System.err.println(response);
+                    try {
+                        JSONArray apis = new JSONArray(response);
+                        if (apis.length() > 0) {
+                            if (apis.getJSONObject(0).getString("ApiVersion") != null) {
+                                result[0] = true;
+                                System.err.println(apis.getJSONObject(0).getString("ApiVersion"));
+                            }
+                        }
+                    } catch (JSONException e) {
+                        System.err.println(e.getMessage());
+                    }
+                }
+            }
+
+            @Override
+            public int join() {
+                return 3000;
+            }
+        });
+        return result[0];
+    }
+
+    public static String parseUrl(String url) {
+        url = url.trim();
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        if (!url.startsWith("https://")) {
+            url = "https://" + url;
+        }
+        return url;
     }
 
     public static void login(Context context, Runnable runAfter) {
@@ -393,6 +506,9 @@ public class Controller {
 
     public static void onActivityStart() {
         setTimestampFormatter(new SimpleDateFormat(Constants.TIMESTAMP));
+        if (!FileManager.exists(Constants.USERDATA_DIRECTORY)) {
+            FileManager.mkDir(Constants.USERDATA_DIRECTORY);
+        }
         if (FileManager.exists(Constants.CREDENTIALS_FILENAME)) {
             try {
                 BufferedReader input = new BufferedReader(new FileReader(FileManager.editFile(Constants.CREDENTIALS_FILENAME)));

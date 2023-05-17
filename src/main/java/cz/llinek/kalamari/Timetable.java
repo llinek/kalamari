@@ -1,17 +1,23 @@
 package cz.llinek.kalamari;
 
-import static cz.llinek.kalamari.Controller.getSubjectById;
 import static cz.llinek.kalamari.Controller.updateTimetable;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.appcompat.view.menu.MenuBuilder;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 
 import cz.llinek.kalamari.dataTypes.Hour;
 
@@ -34,7 +40,7 @@ public class Timetable extends Activity {
         emptyText.setTextColor(getResources().getColor(R.color.element_background));
         emptyText.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
         emptyText.setBackgroundColor(getResources().getColor(R.color.black));
-        reload.setBackgroundResource(R.drawable.ic_baseline_refresh_24);
+        reload.setBackgroundResource(R.drawable.outline_refresh_24);
         reload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -47,27 +53,37 @@ public class Timetable extends Activity {
 
     private void showTimetable() {
         try {
-            Hour[][] timetable = Controller.parseHours(this);
+            Hour[][] timetable = Controller.parsePermanentHours(this);
             LinearLayout contentView = new LinearLayout(this);
-            LinearLayout toolbar = new LinearLayout(this);
+            MaterialToolbar toolbar = new MaterialToolbar(this);
+            @SuppressLint("RestrictedApi") MenuBuilder menu = new MenuBuilder(this);
             LinearLayout timetableView = new LinearLayout(this);
             ImageButton reloadButton = new ImageButton(this);
             ImageButton backButton = new ImageButton(this);
-            contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.setOrientation(LinearLayout.VERTICAL);
+            contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.addView(toolbar);
+            MaterialButton butt;
             contentView.addView(timetableView);
-            toolbar.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-            toolbar.setBackgroundColor(getResources().getColor(R.color.element_background));
-            toolbar.setOrientation(LinearLayout.HORIZONTAL);
-            toolbar.addView(backButton);
+            toolbar.setNavigationIcon(R.drawable.outline_arrow_back_24);
+            toolbar.setNavigationOnClickListener(v -> finish());
+
             toolbar.addView(reloadButton);
-            toolbar.setGravity(Gravity.END);
-            LinearLayout.LayoutParams backLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            toolbar.setTitle("Timetable");
+            @SuppressLint("RestrictedApi") MenuItem reload = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, "");
+            reload.setIcon(R.drawable.outline_refresh_24);
+            reload.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    updateTimetable(getApplicationContext());
+                    showTimetable();
+                    return true;
+                }
+            });
+            MaterialToolbar.LayoutParams backLayoutParams = new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT);
             timetableView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             timetableView.setOrientation(LinearLayout.VERTICAL);
-            timetableView.setBackgroundColor(getResources().getColor(R.color.black));
-            reloadButton.setBackgroundResource(R.drawable.ic_baseline_refresh_24);
+            reloadButton.setBackgroundResource(R.drawable.outline_refresh_24);
             reloadButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -75,7 +91,7 @@ public class Timetable extends Activity {
                     showTimetable();
                 }
             });
-            backLayoutParams.gravity = Gravity.LEFT;
+            backLayoutParams.gravity = Gravity.RIGHT;
             backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
             backButton.setLayoutParams(backLayoutParams);
             backButton.setOnClickListener(new View.OnClickListener() {
@@ -84,35 +100,35 @@ public class Timetable extends Activity {
                     finish();
                 }
             });
-            for (
-                    Hour[] row : timetable) {
+            for (Hour[] row : timetable) {
                 LinearLayout daybox = new LinearLayout(this);
                 daybox.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
                 daybox.setOrientation(LinearLayout.HORIZONTAL);
-                contentView.addView(daybox);
-                for (Hour hour : row) {
+                timetableView.addView(daybox);
+                /*for (Hour hour : row) {
                     if (hour == null) {
                         Button hourButton = new Button(this);
                         hourButton.setBackgroundColor(getResources().getColor(R.color.black));
                         continue;
                     }
-                Button hourButton = new Button(this);
-                hourButton.setBackgroundColor(getResources().getColor(R.color.element_background));
-                hourButton.setText(getSubjectById(this, hour.getId()).getAbbrev());
+                    Button hourButton = new Button(this);
+                    hourButton.setBackgroundColor(getResources().getColor(R.color.element_background));
+                    hourButton.setText(getSubjectById(this, hour.getHourId()).getAbbrev());
                     hourButton.setTextSize(Constants.SUBJECT_TEXT_SIZE);
                     hourButton.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-                    hourButton.setMinHeight(Constants.TIMETABLE_CELL_SIZE);
-                    hourButton.setMinWidth(Constants.TIMETABLE_CELL_SIZE);
+                    hourButton.setMinHeight(dpToPx(this, Constants.TIMETABLE_CELL_DP));
+                    hourButton.setMinWidth(dpToPx(this, Constants.TIMETABLE_CELL_DP));
                     if (hour.getChange() == null) {
                         hourButton.setBackgroundColor(getResources().getColor(R.color.change));
                     }
                     daybox.addView(hourButton);
+                }*/
+                for (Hour hour : row) {
+                    daybox.addView(hour.getView());
                 }
             }
-
             setContentView(contentView);
-        } catch (
-                NullPointerException e) {
+        } catch (NullPointerException e) {
             showEmptyTimetable();
             return;
         }

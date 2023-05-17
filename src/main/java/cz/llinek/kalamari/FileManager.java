@@ -10,19 +10,30 @@ import java.io.IOException;
 public class FileManager {
     static File filesDir = null;
 
-    public static File editFile(String filename) throws IOException {
-        if (!new File(filesDir, filename).exists()) {
-            File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
-            if (!filesArray.exists()) {
-                filesArray.createNewFile();
+    private static void cleanDir(File dir) {
+        for (File file : dir.listFiles()) {
+            if (file.isDirectory()) {
+                cleanDir(file);
             }
-            String filePrefix = readFile(Constants.FILES_ARRAY_FILENAME);
-            FileWriter writer = new FileWriter(filesArray);
-            writer.append(filePrefix + filename + "\n");
-            writer.close();
-            new File(filesDir, filename).createNewFile();
+            file.delete();
         }
-        return new File(filesDir, filename);
+    }
+
+    public static void deleteDirContents(String dir) {
+        File file = new File(filesDir, dir);
+        cleanDir(file);
+    }
+
+    public static File editFile(String filename) throws IOException {
+        File file = new File(filesDir, filename);
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        return file;
+    }
+
+    public static void deleteAllFiles() {
+        cleanDir(filesDir);
     }
 
     public static String readFile(String filename) {
@@ -48,19 +59,11 @@ public class FileManager {
         return null;
     }
 
+    public static void mkDir(String dir) {
+        new File(filesDir, dir).mkdir();
+    }
+
     public static void fileWrite(String filename, String content) throws IOException {
-        if (!new File(filesDir, filename).exists()) {
-            File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
-            if (!filesArray.exists()) {
-                System.err.println(filesArray.getAbsolutePath());
-                filesArray.createNewFile();
-            }
-            String filePrefix = readFile(Constants.FILES_ARRAY_FILENAME);
-            FileWriter writer = new FileWriter(filesArray);
-            writer.append(filePrefix + filename + "\n");
-            writer.close();
-            new File(filesDir, filename).createNewFile();
-        }
         new File(filesDir, filename).delete();
         new File(filesDir, filename).createNewFile();
         FileWriter output = new FileWriter(new File(filesDir, filename));
@@ -70,15 +73,11 @@ public class FileManager {
 
     public static void fileAppend(String filename, String content) throws IOException {
         if (!new File(filesDir, filename).exists()) {
-            File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
-            if (!filesArray.exists()) {
-                filesArray.createNewFile();
-            }
-            String filePrefix = readFile(Constants.FILES_ARRAY_FILENAME);
-            FileWriter writer = new FileWriter(filesArray);
-            writer.append(filePrefix + filename + "\n");
-            writer.close();
             new File(filesDir, filename).createNewFile();
+            FileWriter output = new FileWriter(new File(filesDir, filename));
+            output.write(content);
+            output.close();
+            return;
         }
         String filePrefix = readFile(filename);
         FileWriter output = new FileWriter(new File(filesDir, filename));
@@ -87,48 +86,10 @@ public class FileManager {
     }
 
     public static void deleteFile(String filename) throws IOException {
-        File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
-        if (filesArray.exists()) {
-            StringBuilder filesArrayContent = new StringBuilder();
-            BufferedReader input = new BufferedReader(new FileReader(filesArray));
-            while (true) {
-                String temp = input.readLine();
-                if (temp == null) {
-                    break;
-                }
-                if (!temp.equals(filename)) {
-                    filesArrayContent.append(temp);
-                    filesArrayContent.append('\n');
-                } else {
-                    new File(filesDir, filename).delete();
-                }
-            }
-            filesArray.delete();
-            filesArray.createNewFile();
-            FileWriter output = new FileWriter(filesArray);
-            output.write(filesArrayContent.toString());
-        }
+        new File(filesDir, filename).delete();
     }
 
     public static boolean exists(String filename) {
-        File filesArray = new File(filesDir, Constants.FILES_ARRAY_FILENAME);
-        if (filesArray.exists()) {
-            try {
-                BufferedReader input = new BufferedReader(new FileReader(filesArray));
-                while (true) {
-                    String temp = input.readLine();
-                    if (temp == null) {
-                        break;
-                    }
-                    if (temp.contains(filename)) {
-                        return true;
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-        return false;
+        return new File(filesDir, filename).exists();
     }
 }
