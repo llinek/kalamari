@@ -39,7 +39,7 @@ public class Controller {
     }
 
     public static void updateTimetable(Context context) {
-        performRequest("/api/3/timetable/permanent", new RequestCallback() {
+        performRequest(context, "/api/3/timetable/permanent", new RequestCallback() {
             @Override
             public void run(String response) {
                 if (response != null) {
@@ -138,7 +138,9 @@ public class Controller {
         return (int) (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics()) + 0.5f);
     }
 
-    public static void performRequest(String appendix, RequestCallback runLater) {
+    public static void performRequest(Context context, String appendix, RequestCallback runLater) {
+        login(context, () -> {
+        });
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -167,6 +169,9 @@ public class Controller {
                         while (temp != null) {
                             response.append(temp);
                             temp = input.readLine();
+                        }
+                        if (connection.getResponseMessage().equalsIgnoreCase("Unauthorized")) {
+                            login(context, () -> Toast.makeText(context, "Auth failed, try to reload once more, then login.", Toast.LENGTH_SHORT).show());
                         }
                         response.append("Error: ");
                         response.append(connection.getResponseCode());
@@ -406,83 +411,93 @@ public class Controller {
         return url;
     }
 
-    public static void login(Context context, Runnable runAfter) {
-        Toast.makeText(context, "login", Toast.LENGTH_SHORT).show();
-        if (FileManager.exists(Constants.CREDENTIALS_FILENAME)) {
-            Toast.makeText(context, "loginexists", Toast.LENGTH_SHORT).show();
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        BufferedReader bufferedReader = new BufferedReader(new FileReader(FileManager.editFile(Constants.CREDENTIALS_FILENAME)));
-                        String url = bufferedReader.readLine();
-                        bufferedReader.readLine();
-                        long expirationTime = Long.parseLong(bufferedReader.readLine());
-                        if (System.currentTimeMillis() < expirationTime - 100000) {
-                            runOnUiThread(context, runAfter);
-                            return;
-                        }
-                        bufferedReader.readLine();
-                        String user = bufferedReader.readLine();
-                        String pwd = bufferedReader.readLine();
-                        StringBuilder response = new StringBuilder();
-                        HttpsURLConnection connection = (HttpsURLConnection) new URL(getUrl() + "/api/login").openConnection();
-                        connection.setRequestMethod("POST");
-                        connection.setDoInput(true);
-                        connection.setDoOutput(true);
-                        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                        PrintWriter output = new PrintWriter(connection.getOutputStream());
-                        output.print("client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
-                        output.close();
-                        connection.connect();
-                        if (connection.getErrorStream() == null) {
-                            BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                            String temp = input.readLine();
-                            while (temp != null) {
-                                response.append(temp);
-                                temp = input.readLine();
-                            }
-                            connection.disconnect();
-                            input.close();
-                        } else {
-                            BufferedReader input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                            String temp = input.readLine();
-                            while (temp != null) {
-                                response.append(temp);
-                                temp = input.readLine();
-                            }
-                            response.append("Error: ");
-                            response.append(connection.getResponseCode());
-                            response.append(", ");
-                            response.append(connection.getResponseMessage());
-                            runOnUiThread(context, () -> {
-                                Toast.makeText(context, "Wrong login", Toast.LENGTH_LONG).show();
-                                System.err.println(response.toString());
-                                context.startActivity(new Intent(context, LoginScreen.class));
-                            });
-                        }
+    public static boolean tokenExpired() {
+        String[] credentials = FileManager.readFile(Constants.CREDENTIALS_FILENAME).split("\n");
+        if (credentials.length <= 3) {
+            if (System.currentTimeMillis() < Long.parseLong(credentials[2]) - 5000) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-                        if (connection.getResponseCode() == 200) {
+    public static void login(Context context, Runnable runAfter) {
+        if (FileManager.exists(Constants.CREDENTIALS_FILENAME)) {
+            if (tokenExpired()) {
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            BufferedReader bufferedReader = new BufferedReader(new FileReader(FileManager.editFile(Constants.CREDENTIALS_FILENAME)));
+                            String url = bufferedReader.readLine();
+                            bufferedReader.readLine();
+                            long expirationTime = Long.parseLong(bufferedReader.readLine());
+                            if (System.currentTimeMillis() < expirationTime - 100000) {
+                                runOnUiThread(context, runAfter);
+                                return;
+                            }
+                            bufferedReader.readLine();
+                            String user = bufferedReader.readLine();
+                            String pwd = bufferedReader.readLine();
+                            StringBuilder response = new StringBuilder();
+                            HttpsURLConnection connection = (HttpsURLConnection) new URL(getUrl() + "/api/login").openConnection();
+                            connection.setRequestMethod("POST");
+                            connection.setDoInput(true);
+                            connection.setDoOutput(true);
+                            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                            PrintWriter output = new PrintWriter(connection.getOutputStream());
+                            output.print("client_id=ANDR&grant_type=password&username=" + URLEncoder.encode(user, "utf-8") + "&password=" + URLEncoder.encode(pwd, "utf-8"));
+                            output.close();
+                            connection.connect();
+                            if (connection.getErrorStream() == null) {
+                                BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                                String temp = input.readLine();
+                                while (temp != null) {
+                                    response.append(temp);
+                                    temp = input.readLine();
+                                }
+                                connection.disconnect();
+                                input.close();
+                            } else {
+                                BufferedReader input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                                String temp = input.readLine();
+                                while (temp != null) {
+                                    response.append(temp);
+                                    temp = input.readLine();
+                                }
+                                response.append("Error: ");
+                                response.append(connection.getResponseCode());
+                                response.append(", ");
+                                response.append(connection.getResponseMessage());
+                                runOnUiThread(context, () -> {
+                                    Toast.makeText(context, "Wrong login", Toast.LENGTH_LONG).show();
+                                    System.err.println(response.toString());
+                                    context.startActivity(new Intent(context, LoginScreen.class));
+                                });
+                            }
+
+                            if (connection.getResponseCode() == 200) {
+                                runOnUiThread(context, () -> {
+                                    Toast.makeText(context, "success", Toast.LENGTH_SHORT).show();
+                                });
+                                JSONObject res = new JSONObject(response.toString());
+                                setUrl(url);
+                                setToken(res.getString("access_token"));
+                                FileManager.fileWrite(Constants.CREDENTIALS_FILENAME, url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
+                                runOnUiThread(context, runAfter);
+                            }
+                        } catch (Throwable e) {
                             runOnUiThread(context, () -> {
-                                Toast.makeText(context, "success", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, "Exception", Toast.LENGTH_SHORT).show();
+                                e.printStackTrace();
+                                System.err.println(e.getMessage());
                             });
-                            JSONObject res = new JSONObject(response.toString());
-                            setUrl(url);
-                            setToken(res.getString("access_token"));
-                            FileManager.fileWrite(Constants.CREDENTIALS_FILENAME, url + "\n" + res.getString("access_token") + "\n" + (System.currentTimeMillis() + res.getInt("expires_in") * 1000) + "\n" + res.getString("refresh_token") + "\n" + user + "\n" + pwd);
-                            runOnUiThread(context, runAfter);
                         }
-                    } catch (Throwable e) {
-                        runOnUiThread(context, () -> {
-                            Toast.makeText(context, "Exception", Toast.LENGTH_SHORT).show();
-                            e.printStackTrace();
-                            System.err.println(e.getMessage());
-                        });
                     }
-                }
-            });
-            thread.setDaemon(true);
-            thread.start();
+                });
+                thread.setDaemon(true);
+                thread.start();
+            }
         } else {
             Toast.makeText(context, "else", Toast.LENGTH_SHORT).show();
             context.startActivity(new Intent(context, LoginScreen.class));

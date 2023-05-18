@@ -102,7 +102,7 @@ public class LoginScreen extends Activity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (checkSchoolUrl(parseUrl(/*urlEditText.getText().toString())*/s.toString()))) {
+                if (checkSchoolUrl(parseUrl(s.toString()))) {
                     urlField.setErrorEnabled(false);
                 } else {
                     urlField.setError("Url doesn't work.");
