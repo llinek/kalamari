@@ -37,6 +37,9 @@ public class Hour {
     private String classAbbrev;
     private String className;
     private String roomId;
+    private String caption;
+    private String beginTime;
+    private String endTime;
     private String[] cycleIds;
     private Change change;
     private String theme;
@@ -114,11 +117,12 @@ public class Hour {
                 this.theme = hour.getString("Theme");
                 this.timetableFilename = timetableFilename;
             }
-
-            JSONArray subjects = new JSONObject(FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME)).getJSONArray("Subjects");
-            JSONArray teachers = new JSONObject(FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME)).getJSONArray("Teachers");
-            JSONArray groups = new JSONObject(FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME)).getJSONArray("Groups");
-            JSONArray classes = new JSONObject(FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME)).getJSONArray("Classes");
+            String timetable = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
+            JSONArray hours = new JSONObject(timetable).getJSONArray("Hours");
+            JSONArray subjects = new JSONObject(timetable).getJSONArray("Subjects");
+            JSONArray teachers = new JSONObject(timetable).getJSONArray("Teachers");
+            JSONArray groups = new JSONObject(timetable).getJSONArray("Groups");
+            JSONArray classes = new JSONObject(timetable).getJSONArray("Classes");
             for (int i = 0; i < subjects.length(); i++) {
                 JSONObject subject = subjects.getJSONObject(i);
                 if (subject.getString("Id").equals(subjectId)) {
@@ -150,6 +154,14 @@ public class Hour {
                 if (clas.getString("Id").equals(classId)) {
                     classAbbrev = clas.getString("Abbrev");
                     className = clas.getString("Name");
+                }
+            }
+            for (int i = 0; i < hours.length(); i++) {
+                JSONObject houri = hours.getJSONObject(i);
+                if (houri.getString("Id").equals(hourId)) {
+                    caption = houri.getString("Caption");
+                    beginTime = houri.getString("BeginTime");
+                    endTime = houri.getString("EndTime");
                 }
             }
         } catch (JSONException e) {
@@ -203,6 +215,18 @@ public class Hour {
         layout.addView(group);
         layout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         view = layout;
+    }
+
+    public String getCaption() {
+        return caption;
+    }
+
+    public String getBeginTime() {
+        return beginTime;
+    }
+
+    public String getEndTime() {
+        return endTime;
     }
 
     public String getSubjectId() {

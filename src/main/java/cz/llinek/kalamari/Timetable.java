@@ -4,12 +4,15 @@ import static cz.llinek.kalamari.Controller.updateTimetable;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -21,6 +24,7 @@ import androidx.appcompat.view.menu.MenuBuilder;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textview.MaterialTextView;
 
 import cz.llinek.kalamari.dataTypes.Hour;
 
@@ -53,7 +57,20 @@ public class Timetable extends Activity {
         });
         setContentView(contentView);
     }
-
+    private void onHourClicked(Hour hour) {
+        Dialog popup = new Dialog(this);
+        LinearLayout hourFeatures = new LinearLayout(this);
+        MaterialTextView teacher = new MaterialTextView(this);
+        MaterialTextView theme = new MaterialTextView(this);
+        MaterialTextView changeDescription = new MaterialTextView(this);
+        MaterialTextView changeTeacher = new MaterialTextView(this);
+        hourFeatures.setOrientation(LinearLayout.VERTICAL);
+        hourFeatures.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        popup.requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+        popup.setTitle(hour.getSubjectName() + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
+        popup.setContentView(hourFeatures);
+        !! continue here
+    }
     private void showTimetable() {
         try {
             Hour[][] timetable = Controller.parsePermanentHours(this);

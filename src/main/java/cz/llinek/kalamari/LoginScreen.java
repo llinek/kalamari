@@ -38,11 +38,11 @@ public class LoginScreen extends Activity {
         confirm.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
         confirm.setIconSize((int) (confirm.getTextSize() * 2 + 0.5));
         confirm.setText("Confirm");
-        confirm.setTextSize(30);
+        confirm.setTextSize(Constants.LOGIN_CONFIRM_TEXT_SIZE);
         confirm.setPadding(0, 0, 0, 0);
         confirm.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         schoolList.setText("Select school from list");
-        schoolList.setTextSize(25);
+        schoolList.setTextSize(Constants.LOGIN_SCHOOLLIST_TEXT_SIZE);
         schoolList.setPadding(0, 0, 0, 0);
         schoolList.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         schoolList.setOnClickListener(new View.OnClickListener() {
