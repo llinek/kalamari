@@ -159,7 +159,7 @@ public class Hour {
             }
             for (int i = 0; i < hours.length(); i++) {
                 JSONObject houri = hours.getJSONObject(i);
-                if (houri.getString("Id").equals(hourId)) {
+                if (houri.getInt("Id") == hourId) {
                     caption = houri.getString("Caption");
                     beginTime = houri.getString("BeginTime");
                     endTime = houri.getString("EndTime");

@@ -4,7 +4,6 @@ import static cz.llinek.kalamari.Controller.updateTimetable;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -22,6 +21,7 @@ import androidx.appcompat.view.menu.MenuBuilder;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
 
 import cz.llinek.kalamari.dataTypes.Hour;
@@ -57,66 +57,59 @@ public class Timetable extends Activity {
     }
 
     private void onHourClicked(Hour hour) {
-        System.err.println("onhourclicked\n\n\n");
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(this);
         LinearLayout hourFeatures = new LinearLayout(this);
-        MaterialTextView teacher = new MaterialTextView(this);
-        MaterialTextView theme = new MaterialTextView(this);
-        MaterialTextView changeDescription = new MaterialTextView(this);
-        MaterialTextView changeSubject = new MaterialTextView(this);
-        MaterialTextView changeType = new MaterialTextView(this);
-        MaterialTextView changeHours = new MaterialTextView(this);
-        MaterialTextView changeTime = new MaterialTextView(this);
-        MaterialTextView changeDay = new MaterialTextView(this);
-        MaterialTextView changeTypeName = new MaterialTextView(this);
+        MaterialTextView descriptionView = new MaterialTextView(this);
+        StringBuilder description = new StringBuilder();
         hourFeatures.setOrientation(LinearLayout.VERTICAL);
         hourFeatures.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        hourFeatures.addView(teacher);
-        hourFeatures.addView(theme);
-        hourFeatures.addView(changeDescription);
-        hourFeatures.addView(changeSubject);
-        hourFeatures.addView(changeType);
-        hourFeatures.addView(changeHours);
-        hourFeatures.addView(changeTime);
-        hourFeatures.addView(changeDay);
-        hourFeatures.addView(changeTypeName);
-        teacher.setText("Teacher: " + hour.getTeacherName() == null ? hour.getTeacherAbbrev() : hour.getTeacherName());
-        theme.setText("Theme: " + hour.getTheme());
+        hourFeatures.addView(descriptionView);
         try {
-            changeDescription.setText("Change Description: " + hour.getChange().getDescription());
+            description.append("Teacher: " + hour.getTeacherName() == null ? hour.getTeacherAbbrev() : hour.getTeacherName());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            changeSubject.setText("Change Subject: " + hour.getChange().getChangeSubject());
+            description.append("Theme: " + hour.getTheme());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            changeType.setText("Change Type: " + hour.getChange().getChangeType());
+            description.append("Change Description: " + hour.getChange().getDescription());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            changeHours.setText("Change Hours: " + hour.getChange().getHours());
+            description.append("\nChange Subject: " + hour.getChange().getChangeSubject());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            changeTime.setText("Change Text: " + hour.getChange().getTime());
+            description.append("\nChange Type: " + hour.getChange().getChangeType());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            changeDay.setText("Change Day: " + hour.getChange().getDay().toString());
+            description.append("\nChange Hours: " + hour.getChange().getHours());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            changeTypeName.setText("Change Type Name: " + hour.getChange().getTypeName() == null ? hour.getChange().getTypeAbbrev() : hour.getChange().getTypeName());
+            description.append("\nChange Text: " + hour.getChange().getTime());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
+        try {
+            description.append("\nChange Day: " + hour.getChange().getDay().toString());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            description.append("\nChange Type Name: " + hour.getChange().getTypeName() == null ? hour.getChange().getTypeAbbrev() : hour.getChange().getTypeName());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        !! continue here
         dialogBuilder.setTitle((hour.getSubjectName() == null ? hour.getSubjectAbbrev() : hour.getSubjectName()) + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
         dialogBuilder.setView(hourFeatures);
         dialogBuilder.setCancelable(true);
