@@ -4,7 +4,7 @@ import static cz.llinek.kalamari.Controller.updateTimetable;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -12,12 +12,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.view.menu.MenuBuilder;
@@ -57,20 +55,74 @@ public class Timetable extends Activity {
         });
         setContentView(contentView);
     }
+
     private void onHourClicked(Hour hour) {
-        Dialog popup = new Dialog(this);
+        System.err.println("onhourclicked\n\n\n");
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         LinearLayout hourFeatures = new LinearLayout(this);
         MaterialTextView teacher = new MaterialTextView(this);
         MaterialTextView theme = new MaterialTextView(this);
         MaterialTextView changeDescription = new MaterialTextView(this);
-        MaterialTextView changeTeacher = new MaterialTextView(this);
+        MaterialTextView changeSubject = new MaterialTextView(this);
+        MaterialTextView changeType = new MaterialTextView(this);
+        MaterialTextView changeHours = new MaterialTextView(this);
+        MaterialTextView changeTime = new MaterialTextView(this);
+        MaterialTextView changeDay = new MaterialTextView(this);
+        MaterialTextView changeTypeName = new MaterialTextView(this);
         hourFeatures.setOrientation(LinearLayout.VERTICAL);
         hourFeatures.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        popup.requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-        popup.setTitle(hour.getSubjectName() + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
-        popup.setContentView(hourFeatures);
-        !! continue here
+        hourFeatures.addView(teacher);
+        hourFeatures.addView(theme);
+        hourFeatures.addView(changeDescription);
+        hourFeatures.addView(changeSubject);
+        hourFeatures.addView(changeType);
+        hourFeatures.addView(changeHours);
+        hourFeatures.addView(changeTime);
+        hourFeatures.addView(changeDay);
+        hourFeatures.addView(changeTypeName);
+        teacher.setText("Teacher: " + hour.getTeacherName() == null ? hour.getTeacherAbbrev() : hour.getTeacherName());
+        theme.setText("Theme: " + hour.getTheme());
+        try {
+            changeDescription.setText("Change Description: " + hour.getChange().getDescription());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            changeSubject.setText("Change Subject: " + hour.getChange().getChangeSubject());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            changeType.setText("Change Type: " + hour.getChange().getChangeType());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            changeHours.setText("Change Hours: " + hour.getChange().getHours());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            changeTime.setText("Change Text: " + hour.getChange().getTime());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            changeDay.setText("Change Day: " + hour.getChange().getDay().toString());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            changeTypeName.setText("Change Type Name: " + hour.getChange().getTypeName() == null ? hour.getChange().getTypeAbbrev() : hour.getChange().getTypeName());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        dialogBuilder.setTitle((hour.getSubjectName() == null ? hour.getSubjectAbbrev() : hour.getSubjectName()) + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
+        dialogBuilder.setView(hourFeatures);
+        dialogBuilder.setCancelable(true);
+        dialogBuilder.show();
     }
+
     private void showTimetable() {
         try {
             Hour[][] timetable = Controller.parsePermanentHours(this);
@@ -148,7 +200,9 @@ public class Timetable extends Activity {
                 }*/
                 for (Hour hour : row) {
                     if (hour != null) {
-                        daybox.addView(hour.getView());
+                        View hourView = hour.getView();
+                        hourView.setOnClickListener(v -> onHourClicked(hour));
+                        daybox.addView(hourView);
                     } else {
                         daybox.addView(new Hour(this).getView());
                     }

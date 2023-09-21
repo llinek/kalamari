@@ -5,6 +5,7 @@ import static cz.llinek.kalamari.Controller.getTimestampFormatter;
 
 import android.content.Context;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
@@ -207,6 +208,12 @@ public class Hour {
         group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_GROUP_DP));
         group.setGravity(Gravity.CENTER);
         group.setLayoutParams(groupLayout);
+        layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         layout.setMinimumWidth(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setMinimumHeight(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setPadding(dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP));
