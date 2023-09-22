@@ -29,7 +29,7 @@ public class Controller {
     private static String token;
     private static SimpleDateFormat timestampFormatter;
 
-    public static void updateTimetable(Context context) {
+    public static void updatePermanentTimetable(Context context) {
         performRequest(context, "/api/3/timetable/permanent", new RequestCallback() {
             @Override
             public void run(String response) {
@@ -62,7 +62,7 @@ public class Controller {
         if (FileManager.exists(Constants.PERMANENT_TIMETABLE_FILENAME)) {
             response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
         } else {
-            updateTimetable(context);
+            updatePermanentTimetable(context);
             response = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
         }
         try {

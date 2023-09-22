@@ -1,6 +1,6 @@
 package cz.llinek.kalamari;
 
-import static cz.llinek.kalamari.Controller.updateTimetable;
+import static cz.llinek.kalamari.Controller.updatePermanentTimetable;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -14,7 +14,6 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.view.menu.MenuBuilder;
 
@@ -30,7 +29,7 @@ public class Timetable extends Activity {
     private void showEmptyTimetable() {
         LinearLayout contentView = new LinearLayout(this);
         LinearLayout toolbar = new LinearLayout(this);
-        TextView emptyText = new TextView(this);
+        MaterialTextView emptyText = new MaterialTextView(this);
         ImageButton reload = new ImageButton(this);
         contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
         contentView.setOrientation(LinearLayout.VERTICAL);
@@ -49,7 +48,7 @@ public class Timetable extends Activity {
         reload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                updateTimetable(getApplicationContext());
+                updatePermanentTimetable(getApplicationContext());
                 showTimetable();
             }
         });
@@ -148,7 +147,7 @@ public class Timetable extends Activity {
             reload.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    updateTimetable(getApplicationContext());
+                    updatePermanentTimetable(getApplicationContext());
                     showTimetable();
                     return true;
                 }
@@ -162,7 +161,7 @@ public class Timetable extends Activity {
             reloadButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    updateTimetable(getApplicationContext());
+                    updatePermanentTimetable(getApplicationContext());
                     showTimetable();
                 }
             });

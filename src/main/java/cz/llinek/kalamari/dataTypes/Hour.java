@@ -447,8 +447,10 @@ public class Hour {
 
     public String[] getGroupAbbrevs() {
         if (groupAbbrevs != null) {
-            if (groupAbbrevs[0] != null) {
-                return groupAbbrevs;
+            if (groupAbbrevs.length > 0) {
+                if (groupAbbrevs[0] != null) {
+                    return groupAbbrevs;
+                }
             }
         }
         try {
@@ -504,8 +506,10 @@ public class Hour {
 
     public String[] getGroupNames() {
         if (groupNames != null) {
-            if (groupNames[0] != null) {
-                return groupNames;
+            if (groupNames.length > 0) {
+                if (groupNames[0] != null) {
+                    return groupNames;
+                }
             }
         }
         try {
