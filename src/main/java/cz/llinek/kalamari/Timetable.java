@@ -24,6 +24,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
 
+import cz.llinek.kalamari.dataTypes.EmptyHour;
 import cz.llinek.kalamari.dataTypes.Hour;
 
 public class Timetable extends Activity {
@@ -197,7 +198,7 @@ public class Timetable extends Activity {
                         hourView.setOnClickListener(v -> onHourClicked(hour));
                         daybox.addView(hourView);
                     } else {
-                        daybox.addView(new Hour(this).getView());
+                        daybox.addView(new EmptyHour(this).getView());
                     }
                 }
             }

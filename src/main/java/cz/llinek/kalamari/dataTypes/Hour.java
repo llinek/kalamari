@@ -5,11 +5,15 @@ import static cz.llinek.kalamari.Controller.getTimestampFormatter;
 
 import android.content.Context;
 import android.view.Gravity;
-import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.textview.MaterialTextView;
 
@@ -18,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
+import java.util.Arrays;
 
 import cz.llinek.kalamari.Constants;
 import cz.llinek.kalamari.Controller;
@@ -38,38 +43,16 @@ public class Hour {
     private String classAbbrev;
     private String className;
     private String roomId;
-    private String caption;
-    private String beginTime;
-    private String endTime;
+    private String roomName;
+    private String roomAbbrev;
     private String[] cycleIds;
+    private String[] cycleNames;
+    private String[] cycleAbbrevs;
     private Change change;
     private String theme;
     private String timetableFilename;
     private FrameLayout view;
     private Context context;
-
-    public Hour(Context context) {
-        /*this.hourId = -1;
-        this.groupIds = new String[]{};
-        this.subjectId = "";
-        this.subjectAbbrev = "";
-        this.subjectName = "";
-        this.teacherId = "";
-        this.teacherAbbrev = "";
-        this.teacherName = "";
-        this.groupAbbrev = "";
-        this.groupName = "";
-        this.classId = "";
-        this.classAbbrev = "";
-        this.className = "";
-        this.roomId = "";
-        this.cycleIds = new String[]{};
-        this.change = null;
-        this.theme = "";
-        this.timetableFilename = "";*/
-        this.context = context;
-        updateView();
-    }
 
     public Hour(@NonNull Context context, JSONObject hour, String timetableFilename) {
         try {
@@ -88,6 +71,7 @@ public class Hour {
                 Change change = new Change(c.getString("ChangeSubject"), getTimestampFormatter().parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
+                System.out.println("groupIds = " + Arrays.toString(getGroupIds()));
                 this.teacherId = hour.getString("TeacherId");
                 this.subjectId = hour.getString("SubjectId");
                 this.roomId = hour.getString("RoomId");
@@ -98,6 +82,7 @@ public class Hour {
             } catch (JSONException e) {
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
+                System.out.println("groupIds = " + Arrays.toString(getGroupIds()));
                 this.teacherId = hour.getString("TeacherId");
                 this.subjectId = hour.getString("SubjectId");
                 this.roomId = hour.getString("RoomId");
@@ -110,6 +95,7 @@ public class Hour {
                 System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage());
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
+                System.out.println("groupIds = " + Arrays.toString(getGroupIds()));
                 this.teacherId = hour.getString("TeacherId");
                 this.subjectId = hour.getString("SubjectId");
                 this.roomId = hour.getString("RoomId");
@@ -118,59 +104,99 @@ public class Hour {
                 this.theme = hour.getString("Theme");
                 this.timetableFilename = timetableFilename;
             }
-            String timetable = FileManager.readFile(Constants.PERMANENT_TIMETABLE_FILENAME);
-            JSONArray hours = new JSONObject(timetable).getJSONArray("Hours");
-            JSONArray subjects = new JSONObject(timetable).getJSONArray("Subjects");
-            JSONArray teachers = new JSONObject(timetable).getJSONArray("Teachers");
-            JSONArray groups = new JSONObject(timetable).getJSONArray("Groups");
-            JSONArray classes = new JSONObject(timetable).getJSONArray("Classes");
-            for (int i = 0; i < subjects.length(); i++) {
-                JSONObject subject = subjects.getJSONObject(i);
-                if (subject.getString("Id").equals(subjectId)) {
-                    subjectAbbrev = subject.getString("Abbrev");
-                    subjectName = subject.getString("Name");
-                    break;
-                }
-            }
-            for (int i = 0; i < teachers.length(); i++) {
-                JSONObject teacher = teachers.getJSONObject(i);
-                if (teacher.getString("Id").equals(teacherId)) {
-                    teacherAbbrev = teacher.getString("Abbrev");
-                    teacherName = teacher.getString("Name");
-                    break;
-                }
-            }
-            for (int i = 0; i < groups.length(); i++) {
-                JSONObject group = groups.getJSONObject(i);
-                for (int j = 0; j < getGroupIds().length; j++) {
-                    if (group.getString("Id").equals(getGroupIds()[j])) {
-                        groupAbbrevs[j] = group.getString("Abbrev");
-                        groupNames[j] = group.getString("Name");
-                        classId = group.getString("ClassId");
-                    }
-                }
-            }
-            for (int i = 0; i < classes.length(); i++) {
-                JSONObject clas = classes.getJSONObject(i);
-                if (clas.getString("Id").equals(classId)) {
-                    classAbbrev = clas.getString("Abbrev");
-                    className = clas.getString("Name");
-                }
-            }
-            for (int i = 0; i < hours.length(); i++) {
-                JSONObject houri = hours.getJSONObject(i);
-                if (houri.getInt("Id") == hourId) {
-                    caption = houri.getString("Caption");
-                    beginTime = houri.getString("BeginTime");
-                    endTime = houri.getString("EndTime");
-                }
-            }
         } catch (JSONException e) {
             e.printStackTrace();
             System.err.println(e.getMessage());
         }
         this.context = context;
         updateView();
+    }
+
+    public String getRoomName() {
+        if (roomName == null) {
+            try {
+                JSONArray rooms = new JSONObject(getTimetableFilename()).getJSONArray("Rooms");
+                for (int i = 0; i < rooms.length(); i++) {
+                    JSONObject room = rooms.getJSONObject(i);
+                    if (room.getString("Id").equals(roomId)) {
+                        roomName = room.getString("Name");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return roomName;
+    }
+
+    public String getRoomAbbrev() {
+        if (roomAbbrev == null) {
+            try {
+                JSONArray rooms = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Rooms");
+                for (int i = 0; i < rooms.length(); i++) {
+                    JSONObject room = rooms.getJSONObject(i);
+                    if (room.getString("Id").equals(getRoomId())) {
+                        roomAbbrev = room.getString("Name");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return roomAbbrev;
+    }
+
+    public String[] getCycleNames() {
+        if (cycleNames == null) {
+            try {
+                JSONArray cycles = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Cycles");
+                for (int i = 0; i < cycles.length(); i++) {
+                    JSONObject cycle = cycles.getJSONObject(i);
+                    for (int j = 0; j < getCycleIds().length; j++) {
+                        if (cycle.getString("Id").equals(getCycleIds()[j])) {
+                            cycleAbbrevs[j] = cycle.getString("Abbrev");
+                            cycleNames[j] = cycle.getString("Name");
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return cycleNames;
+    }
+
+    public String[] getCycleAbbrevs() {
+        if (cycleAbbrevs == null) {
+            try {
+                JSONArray cycles = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Cycles");
+                for (int i = 0; i < cycles.length(); i++) {
+                    JSONObject cycle = cycles.getJSONObject(i);
+                    for (int j = 0; j < getCycleIds().length; j++) {
+                        if (cycle.getString("Id").equals(getCycleIds()[j])) {
+                            cycleAbbrevs[j] = cycle.getString("Abbrev");
+                            cycleNames[j] = cycle.getString("Name");
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return cycleAbbrevs;
+    }
+
+    private TableRow generateDialogMessageRow(String keyText, String valueText) {
+        TableRow row = new TableRow(context);
+        TextView key = new TextView(context);
+        TextView value = new TextView(context);
+        ViewGroup.MarginLayoutParams valueLayoutParams = new ViewGroup.MarginLayoutParams(ViewGroup.MarginLayoutParams.MATCH_PARENT, ViewGroup.MarginLayoutParams.WRAP_CONTENT);
+        row.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        valueLayoutParams.leftMargin = dpToPx(context, 8);
+        key.setText(keyText);
+        key.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        value.setText(valueText);
+        return row;
     }
 
     private void updateView() {
@@ -182,11 +208,22 @@ public class Hour {
         FrameLayout.LayoutParams teacherLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         FrameLayout.LayoutParams groupLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         layout.setOnClickListener(v -> {
-            Controller.setClickedHour(this);
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context);
+            TableLayout message = new TableLayout(context);
+            message.addView(generateDialogMessageRow("Group:", Arrays.toString(getGroupAbbrevs())));
+            message.addView(generateDialogMessageRow("Teacher:", getTeacherName()));
+            message.addView(generateDialogMessageRow("Group:", Arrays.toString(getGroupAbbrevs())));
+            message.addView(generateDialogMessageRow("Group (full):", Arrays.toString(getGroupNames())));
+            if (getSubjectName() == null) {
+                dialogBuilder.setTitle(getSubjectAbbrev());
+            } else {
+                dialogBuilder.setTitle(getSubjectName());
+            }
+            dialogBuilder.create();
         });
         subjectLayout.gravity = Gravity.CENTER;
         teacherLayout.gravity = Gravity.RIGHT | Gravity.BOTTOM;
-        groupLayout.gravity = Gravity.LEFT | Gravity.BOTTOM;
+        groupLayout.gravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
         subject.setText(getSubjectAbbrev());
         subject.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_SUBJECT_DP));
         subject.setGravity(Gravity.CENTER);
@@ -208,12 +245,6 @@ public class Hour {
         group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_GROUP_DP));
         group.setGravity(Gravity.CENTER);
         group.setLayoutParams(groupLayout);
-        layout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
         layout.setMinimumWidth(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setMinimumHeight(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setPadding(dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP));
@@ -224,23 +255,26 @@ public class Hour {
         view = layout;
     }
 
-    public String getCaption() {
-        return caption;
-    }
-
-    public String getBeginTime() {
-        return beginTime;
-    }
-
-    public String getEndTime() {
-        return endTime;
-    }
-
     public String getSubjectId() {
         return subjectId;
     }
 
     public String getSubjectName() {
+        if (subjectName == null) {
+            try {
+                JSONArray subjects = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Subjects");
+                for (int i = 0; i < subjects.length(); i++) {
+                    JSONObject subject = subjects.getJSONObject(i);
+                    if (subject.getString("Id").equals(subjectId)) {
+                        subjectAbbrev = subject.getString("Abbrev");
+                        subjectName = subject.getString("Name");
+                        break;
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return subjectName;
     }
 
@@ -250,6 +284,21 @@ public class Hour {
     }
 
     public String getTeacherName() {
+        if (teacherName == null) {
+            try {
+                JSONArray teachers = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Teachers");
+                for (int i = 0; i < teachers.length(); i++) {
+                    JSONObject teacher = teachers.getJSONObject(i);
+                    if (teacher.getString("Id").equals(getTeacherId())) {
+                        teacherAbbrev = teacher.getString("Abbrev");
+                        teacherName = teacher.getString("Name");
+                        break;
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return teacherName;
     }
 
@@ -263,6 +312,21 @@ public class Hour {
     }
 
     public String getSubjectAbbrev() {
+        if (subjectAbbrev == null) {
+            try {
+                JSONArray subjects = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Subjects");
+                for (int i = 0; i < subjects.length(); i++) {
+                    JSONObject subject = subjects.getJSONObject(i);
+                    if (subject.getString("Id").equals(subjectId)) {
+                        subjectAbbrev = subject.getString("Abbrev");
+                        subjectName = subject.getString("Name");
+                        break;
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return subjectAbbrev;
     }
 
@@ -281,6 +345,21 @@ public class Hour {
     }
 
     public String getTeacherAbbrev() {
+        if (teacherAbbrev == null) {
+            try {
+                JSONArray teachers = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Teachers");
+                for (int i = 0; i < teachers.length(); i++) {
+                    JSONObject teacher = teachers.getJSONObject(i);
+                    if (teacher.getString("Id").equals(getTeacherId())) {
+                        teacherAbbrev = teacher.getString("Abbrev");
+                        teacherName = teacher.getString("Name");
+                        break;
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return teacherAbbrev;
     }
 
@@ -344,6 +423,27 @@ public class Hour {
     }
 
     public String[] getGroupAbbrevs() {
+        if (groupAbbrevs != null) {
+            if (groupAbbrevs[0] != null) {
+                return groupAbbrevs;
+            }
+        }
+        try {
+            JSONArray groups = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Groups");
+            for (int i = 0; i < groups.length(); i++) {
+                JSONObject group = groups.getJSONObject(i);
+                groupAbbrevs = new String[getGroupIds().length];
+                for (int j = 0; j < getGroupIds().length; j++) {
+                    if (group.getString("Id").equals(getGroupIds()[j])) {
+                        groupAbbrevs[j] = group.getString("Abbrev");
+                        groupNames[j] = group.getString("Name");
+                        classId = group.getString("ClassId");
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
         return groupAbbrevs;
     }
 
@@ -353,6 +453,26 @@ public class Hour {
     }
 
     public String[] getGroupNames() {
+        if (groupNames != null) {
+            if (groupNames[0] != null) {
+                return groupNames;
+            }
+        }
+        try {
+            JSONArray groups = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Groups");
+            for (int i = 0; i < groups.length(); i++) {
+                JSONObject group = groups.getJSONObject(i);
+                for (int j = 0; j < getGroupIds().length; j++) {
+                    if (group.getString("Id").equals(getGroupIds()[j])) {
+                        groupAbbrevs[j] = group.getString("Abbrev");
+                        groupNames[j] = group.getString("Name");
+                        classId = group.getString("ClassId");
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
         return groupNames;
     }
 
@@ -362,10 +482,27 @@ public class Hour {
     }
 
     public String getClassId() {
+        if (classId == null) {
+            getGroupAbbrevs();
+        }
         return classId;
     }
 
     public String getClassAbbrev() {
+        if (classAbbrev == null) {
+            try {
+                JSONArray classes = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Classes");
+                for (int i = 0; i < classes.length(); i++) {
+                    JSONObject clas = classes.getJSONObject(i);
+                    if (clas.getString("Id").equals(getClassId())) {
+                        classAbbrev = clas.getString("Abbrev");
+                        className = clas.getString("Name");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return classAbbrev;
     }
 
@@ -375,6 +512,20 @@ public class Hour {
     }
 
     public String getClassName() {
+        if (className == null) {
+            try {
+                JSONArray classes = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Classes");
+                for (int i = 0; i < classes.length(); i++) {
+                    JSONObject clas = classes.getJSONObject(i);
+                    if (clas.getString("Id").equals(getClassId())) {
+                        classAbbrev = clas.getString("Abbrev");
+                        className = clas.getString("Name");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return className;
     }
 

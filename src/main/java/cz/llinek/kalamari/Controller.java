@@ -28,15 +28,6 @@ public class Controller {
     private static String url;
     private static String token;
     private static SimpleDateFormat timestampFormatter;
-    private static Hour clickedHour;
-
-    public static Hour getClickedHour() {
-        return clickedHour;
-    }
-
-    public static void setClickedHour(Hour clickedHour) {
-        Controller.clickedHour = clickedHour;
-    }
 
     public static void updateTimetable(Context context) {
         performRequest(context, "/api/3/timetable/permanent", new RequestCallback() {
