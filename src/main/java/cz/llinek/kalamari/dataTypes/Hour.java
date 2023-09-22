@@ -8,12 +8,10 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.textview.MaterialTextView;
 
@@ -45,6 +43,9 @@ public class Hour {
     private String roomId;
     private String roomName;
     private String roomAbbrev;
+    private String caption;
+    private String beginTime;
+    private String endTime;
     private String[] cycleIds;
     private String[] cycleNames;
     private String[] cycleAbbrevs;
@@ -204,26 +205,15 @@ public class Hour {
         MaterialTextView subject = new MaterialTextView(context);
         MaterialTextView teacher = new MaterialTextView(context);
         MaterialTextView group = new MaterialTextView(context);
+        MaterialTextView room = new MaterialTextView(context);
         FrameLayout.LayoutParams subjectLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         FrameLayout.LayoutParams teacherLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         FrameLayout.LayoutParams groupLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        layout.setOnClickListener(v -> {
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context);
-            TableLayout message = new TableLayout(context);
-            message.addView(generateDialogMessageRow("Group:", Arrays.toString(getGroupAbbrevs())));
-            message.addView(generateDialogMessageRow("Teacher:", getTeacherName()));
-            message.addView(generateDialogMessageRow("Group:", Arrays.toString(getGroupAbbrevs())));
-            message.addView(generateDialogMessageRow("Group (full):", Arrays.toString(getGroupNames())));
-            if (getSubjectName() == null) {
-                dialogBuilder.setTitle(getSubjectAbbrev());
-            } else {
-                dialogBuilder.setTitle(getSubjectName());
-            }
-            dialogBuilder.create();
-        });
+        FrameLayout.LayoutParams roomLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         subjectLayout.gravity = Gravity.CENTER;
         teacherLayout.gravity = Gravity.RIGHT | Gravity.BOTTOM;
-        groupLayout.gravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+        groupLayout.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
+        roomLayout.gravity = Gravity.BOTTOM | Gravity.LEFT;
         subject.setText(getSubjectAbbrev());
         subject.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_SUBJECT_DP));
         subject.setGravity(Gravity.CENTER);
@@ -245,14 +235,76 @@ public class Hour {
         group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_GROUP_DP));
         group.setGravity(Gravity.CENTER);
         group.setLayoutParams(groupLayout);
+        !!fix this room.setText(getRoomAbbrev());
+        room.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_ROOM_DP));
+        room.setGravity(Gravity.CENTER);
+        room.setLayoutParams(roomLayout);
         layout.setMinimumWidth(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setMinimumHeight(Controller.dpToPx(context, Constants.TIMETABLE_CELL_DP));
         layout.setPadding(dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP), dpToPx(context, Constants.TIMETABLE_CELL_PADDING_DP));
         layout.addView(subject);
         layout.addView(teacher);
         layout.addView(group);
+        layout.addView(room);
         layout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         view = layout;
+    }
+
+    public String getCaption() {
+        if (caption == null) {
+            try {
+                JSONArray hours = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Hours");
+                for (int i = 0; i < hours.length(); i++) {
+                    JSONObject houri = hours.getJSONObject(i);
+                    if (houri.getInt("Id") == hourId) {
+                        caption = houri.getString("Caption");
+                        beginTime = houri.getString("BeginTime");
+                        endTime = houri.getString("EndTime");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return caption;
+    }
+
+    public String getBeginTime() {
+        if (beginTime == null) {
+            try {
+                JSONArray hours = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Hours");
+                for (int i = 0; i < hours.length(); i++) {
+                    JSONObject houri = hours.getJSONObject(i);
+                    if (houri.getInt("Id") == hourId) {
+                        caption = houri.getString("Caption");
+                        beginTime = houri.getString("BeginTime");
+                        endTime = houri.getString("EndTime");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return beginTime;
+    }
+
+    public String getEndTime() {
+        if (endTime == null) {
+            try {
+                JSONArray hours = new JSONObject(FileManager.readFile(getTimetableFilename())).getJSONArray("Hours");
+                for (int i = 0; i < hours.length(); i++) {
+                    JSONObject houri = hours.getJSONObject(i);
+                    if (houri.getInt("Id") == hourId) {
+                        caption = houri.getString("Caption");
+                        beginTime = houri.getString("BeginTime");
+                        endTime = houri.getString("EndTime");
+                    }
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return endTime;
     }
 
     public String getSubjectId() {

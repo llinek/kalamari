@@ -59,10 +59,10 @@ public class Timetable extends Activity {
 
     private void onHourClicked(Hour hour) {
         MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(this);
-        LinearLayout hourFeatures = new LinearLayout(this);
+        FrameLayout hourFeatures = new FrameLayout(this);
         MaterialTextView descriptionView = new MaterialTextView(this);
         StringBuilder description = new StringBuilder();
-        hourFeatures.setOrientation(LinearLayout.VERTICAL);
+        descriptionView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT));
         hourFeatures.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         hourFeatures.addView(descriptionView);
         try {
@@ -71,12 +71,17 @@ public class Timetable extends Activity {
             e.printStackTrace();
         }
         try {
-            description.append("Theme: " + hour.getTheme());
+            description.append("\nTheme: " + hour.getTheme());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
         try {
-            description.append("Change Description: " + hour.getChange().getDescription());
+            description.append("\nCaption: " + hour.getTheme());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            description.append("\nChange Description: " + hour.getChange().getDescription());
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -110,10 +115,11 @@ public class Timetable extends Activity {
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
-        !! continue here
+        descriptionView.setText(description.toString());
         dialogBuilder.setTitle((hour.getSubjectName() == null ? hour.getSubjectAbbrev() : hour.getSubjectName()) + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
-        dialogBuilder.setView(hourFeatures);
-        dialogBuilder.setCancelable(true);
+        //dialogBuilder.setView(hourFeatures);
+        dialogBuilder.setMessage(description.toString());
+        dialogBuilder.setPositiveButton("Ok", null);
         dialogBuilder.show();
     }
 

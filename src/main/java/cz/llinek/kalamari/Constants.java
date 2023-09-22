@@ -1,7 +1,6 @@
 package cz.llinek.kalamari;
 
 public class Constants {
-
     public static final String CREDENTIALS_FILENAME = "userdata/credentials.cfg";
     public static final String USERDATA_DIRECTORY = "userdata";
     public static final String PERMANENT_TIMETABLE_FILENAME = "userdata/timetable-perm.json";
@@ -14,4 +13,5 @@ public class Constants {
     public static final float TIMETABLE_CELL_SUBJECT_DP = 8;
     public static final float TIMETABLE_CELL_TEACHER_DP = 5;
     public static final float TIMETABLE_CELL_GROUP_DP = 5;
+    public static final float TIMETABLE_CELL_ROOM_DP = 5;
 }
