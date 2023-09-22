@@ -38,7 +38,7 @@ public class Controller {
                         FileManager.fileWrite(Constants.PERMANENT_TIMETABLE_FILENAME, response);
                     } catch (IOException e) {
                         e.printStackTrace();
-                        runOnUiThread(context, () -> System.err.println(e.getMessage()));
+                        System.err.println(e.getMessage());
                     }
                 }
             }
@@ -83,8 +83,6 @@ public class Controller {
                     }
                 }
             }
-            System.out.println(minHours);
-            System.out.println(maxHours);
             hours = new Hour[days][maxHours - minHours + 1];
             for (int dayId = 0; dayId < hours.length; dayId++) {
                 /*for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
@@ -103,11 +101,9 @@ public class Controller {
                         hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
                     } catch (JSONException e) {
                         e.printStackTrace();
-                        runOnUiThread(context, () -> System.err.println("\n\n\nno change\n\n\n\n\n" + e.getMessage()));
                         hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
                     } catch (ParseException e) {
                         e.printStackTrace();
-                        runOnUiThread(context, () -> System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage()));
                         hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
                     }
                 }*/
@@ -115,12 +111,11 @@ public class Controller {
                 for (int i = 0; i < atoms.length(); i++) {
                     JSONObject hour = atoms.getJSONObject(i);
                     hours[dayId][hour.getInt("HourId") - minHours] = new Hour(context, hour, Constants.PERMANENT_TIMETABLE_FILENAME);
-                    System.out.println("inhourfor");
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
-            runOnUiThread(context, () -> System.err.println(e.getMessage()));
+            System.err.println(e.getMessage());
         }
         return hours;
     }
@@ -142,7 +137,6 @@ public class Controller {
                     connection.setDoInput(true);
                     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                     connection.setRequestProperty("Authorization", "Bearer " + getToken());
-                    System.out.println(getToken());
                     connection.connect();
                     if (connection.getErrorStream() == null) {
                         BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -203,7 +197,6 @@ public class Controller {
                     connection.setDoInput(true);
                     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                     connection.setRequestProperty("Authorization", "Bearer " + getToken());
-                    System.out.println(getToken());
                     connection.connect();
                     if (connection.getErrorStream() == null) {
                         BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -368,7 +361,6 @@ public class Controller {
             @Override
             public void run(String response) {
                 if (response != null) {
-                    System.err.println(response);
                     try {
                         JSONArray apis = new JSONArray(response);
                         if (apis.length() > 0) {

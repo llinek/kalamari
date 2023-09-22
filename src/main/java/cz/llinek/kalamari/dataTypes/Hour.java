@@ -5,11 +5,8 @@ import static cz.llinek.kalamari.Controller.getTimestampFormatter;
 
 import android.content.Context;
 import android.view.Gravity;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -20,7 +17,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
-import java.util.Arrays;
 
 import cz.llinek.kalamari.Constants;
 import cz.llinek.kalamari.Controller;
@@ -72,7 +68,6 @@ public class Hour {
                 Change change = new Change(c.getString("ChangeSubject"), getTimestampFormatter().parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
-                System.out.println("groupIds = " + Arrays.toString(getGroupIds()));
                 this.teacherId = hour.getString("TeacherId");
                 this.subjectId = hour.getString("SubjectId");
                 this.roomId = hour.getString("RoomId");
@@ -83,7 +78,6 @@ public class Hour {
             } catch (JSONException e) {
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
-                System.out.println("groupIds = " + Arrays.toString(getGroupIds()));
                 this.teacherId = hour.getString("TeacherId");
                 this.subjectId = hour.getString("SubjectId");
                 this.roomId = hour.getString("RoomId");
@@ -93,10 +87,9 @@ public class Hour {
                 this.timetableFilename = timetableFilename;
             } catch (ParseException e) {
                 e.printStackTrace();
-                System.err.println("\n\n\nchange err, fallback to timetable without changes\n\n\n\n\n" + e.getMessage());
+                System.out.println("no changes: " + e.getMessage());
                 this.hourId = hour.getInt("HourId");
                 this.groupIds = groupIds;
-                System.out.println("groupIds = " + Arrays.toString(getGroupIds()));
                 this.teacherId = hour.getString("TeacherId");
                 this.subjectId = hour.getString("SubjectId");
                 this.roomId = hour.getString("RoomId");
@@ -137,7 +130,7 @@ public class Hour {
                 for (int i = 0; i < rooms.length(); i++) {
                     JSONObject room = rooms.getJSONObject(i);
                     if (room.getString("Id").equals(getRoomId())) {
-                        roomAbbrev = room.getString("Name");
+                        roomAbbrev = room.getString("Abbrev");
                     }
                 }
             } catch (JSONException e) {
@@ -187,19 +180,6 @@ public class Hour {
         return cycleAbbrevs;
     }
 
-    private TableRow generateDialogMessageRow(String keyText, String valueText) {
-        TableRow row = new TableRow(context);
-        TextView key = new TextView(context);
-        TextView value = new TextView(context);
-        ViewGroup.MarginLayoutParams valueLayoutParams = new ViewGroup.MarginLayoutParams(ViewGroup.MarginLayoutParams.MATCH_PARENT, ViewGroup.MarginLayoutParams.WRAP_CONTENT);
-        row.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        valueLayoutParams.leftMargin = dpToPx(context, 8);
-        key.setText(keyText);
-        key.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        value.setText(valueText);
-        return row;
-    }
-
     private void updateView() {
         FrameLayout layout = new FrameLayout(context);
         MaterialTextView subject = new MaterialTextView(context);
@@ -222,20 +202,11 @@ public class Hour {
         teacher.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_TEACHER_DP));
         teacher.setGravity(Gravity.CENTER);
         teacher.setLayoutParams(teacherLayout);
-        if (getGroupAbbrevs() != null) {
-            StringBuilder groupText = new StringBuilder();
-            for (int i = 0; i < getGroupAbbrevs().length; i++) {
-                groupText.append(getGroupAbbrevs()[i]);
-                if (i + 1 < getGroupAbbrevs().length) {
-                    groupText.append(", ");
-                }
-            }
-            group.setText(groupText.toString());
-        }
+        group.setText(getHumanGroupAbbrevs());
         group.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_GROUP_DP));
         group.setGravity(Gravity.CENTER);
         group.setLayoutParams(groupLayout);
-        !!fix this room.setText(getRoomAbbrev());
+        room.setText(getRoomAbbrev());
         room.setTextSize(Controller.dpToPx(context, Constants.TIMETABLE_CELL_ROOM_DP));
         room.setGravity(Gravity.CENTER);
         room.setLayoutParams(roomLayout);
@@ -490,6 +461,7 @@ public class Hour {
                         groupAbbrevs[j] = group.getString("Abbrev");
                         groupNames[j] = group.getString("Name");
                         classId = group.getString("ClassId");
+                        return groupAbbrevs;
                     }
                 }
             }
@@ -502,6 +474,32 @@ public class Hour {
     public void setGroupAbbrevs(String[] groupAbbrevs) {
         this.groupAbbrevs = groupAbbrevs;
         updateView();
+    }
+
+    public String getHumanGroupNames() {
+        StringBuilder humanGroupNames = new StringBuilder();
+        for (String groupName :
+                getGroupNames()) {
+            humanGroupNames.append(groupName);
+            humanGroupNames.append(", ");
+        }
+        if (humanGroupNames.toString().length() >= 2) {
+            return humanGroupNames.substring(0, humanGroupNames.length() - 2);
+        }
+        return humanGroupNames.toString();
+    }
+
+    public String getHumanGroupAbbrevs() {
+        StringBuilder humanGroupAbbrevs = new StringBuilder();
+        for (String groupAbbrev :
+                getGroupAbbrevs()) {
+            humanGroupAbbrevs.append(groupAbbrev);
+            humanGroupAbbrevs.append(", ");
+        }
+        if (humanGroupAbbrevs.toString().length() >= 2) {
+            return humanGroupAbbrevs.substring(0, humanGroupAbbrevs.length() - 2);
+        }
+        return humanGroupAbbrevs.toString();
     }
 
     public String[] getGroupNames() {

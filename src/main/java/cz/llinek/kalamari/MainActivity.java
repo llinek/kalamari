@@ -1,5 +1,6 @@
 package cz.llinek.kalamari;
 
+import static cz.llinek.kalamari.Controller.dpToPx;
 import static cz.llinek.kalamari.Controller.login;
 import static cz.llinek.kalamari.Controller.onActivityStart;
 
@@ -24,10 +25,11 @@ public class MainActivity extends Activity {
         vBox.setPadding(0, 0, 0, 0);
         this.setContentView(vBox, params);
         MaterialButton logout = new MaterialButton(this);
-        MaterialButton timetable = new MaterialButton(this);
+        MaterialButton permanentTimetable = new MaterialButton(this);
         MaterialButton marks = new MaterialButton(this);
-        logout.setMinHeight(100);
+        logout.setMinHeight(dpToPx(this, Constants.DASHBOARD_BUTTON_MIN_HEIGHT));
         logout.setText("Logout");
+        logout.setPadding(0, 0, 0, 0);
         logout.setLayoutParams(params);
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -42,29 +44,22 @@ public class MainActivity extends Activity {
                 });
             }
         });
-        timetable.setMinHeight(100);
-        timetable.setText("Timetable");
-        timetable.setPadding(0, 0, 0, 0);
-        timetable.setLayoutParams(params);
-        timetable.setOnClickListener(new View.OnClickListener() {
+        permanentTimetable.setMinHeight(dpToPx(this, Constants.DASHBOARD_BUTTON_MIN_HEIGHT));
+        permanentTimetable.setText("Permanent Timetable");
+        permanentTimetable.setPadding(0, 0, 0, 0);
+        permanentTimetable.setLayoutParams(params);
+        permanentTimetable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*performRequest(getApplicationContext(), "/api/3/timetable/permanent", new RequestCallback() {
-                    @Override
-                    public void run(String response) {
-                        timetable(response);
-                    }
-                });*/
                 startActivity(new Intent(getApplicationContext(), Timetable.class));
             }
         });
-        marks.setMinHeight(100);
+        marks.setMinHeight(dpToPx(this, Constants.DASHBOARD_BUTTON_MIN_HEIGHT));
         marks.setPadding(0, 0, 0, 0);
         marks.setText("Marks");
         marks.setLayoutParams(params);
-        timetable.setMinHeight(100);
         vBox.addView(logout);
-        vBox.addView(timetable);
+        vBox.addView(permanentTimetable);
         vBox.addView(marks);
     }
 

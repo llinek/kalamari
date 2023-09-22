@@ -10,7 +10,6 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -59,14 +58,11 @@ public class Timetable extends Activity {
 
     private void onHourClicked(Hour hour) {
         MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(this);
-        FrameLayout hourFeatures = new FrameLayout(this);
         MaterialTextView descriptionView = new MaterialTextView(this);
         StringBuilder description = new StringBuilder();
         descriptionView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT));
-        hourFeatures.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        hourFeatures.addView(descriptionView);
         try {
-            description.append("Teacher: " + hour.getTeacherName() == null ? hour.getTeacherAbbrev() : hour.getTeacherName());
+            description.append("Teacher: " + (hour.getTeacherName() == null ? hour.getTeacherAbbrev() : hour.getTeacherName()));
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -76,7 +72,7 @@ public class Timetable extends Activity {
             e.printStackTrace();
         }
         try {
-            description.append("\nCaption: " + hour.getTheme());
+            description.append("\nGroup: " + (hour.getHumanGroupNames() == null ? hour.getHumanGroupAbbrevs() : hour.getHumanGroupNames()));
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -115,11 +111,15 @@ public class Timetable extends Activity {
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
+        try {
+            description.append("\nClass: " + hour.getClassName());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
         descriptionView.setText(description.toString());
         dialogBuilder.setTitle((hour.getSubjectName() == null ? hour.getSubjectAbbrev() : hour.getSubjectName()) + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
-        //dialogBuilder.setView(hourFeatures);
         dialogBuilder.setMessage(description.toString());
-        dialogBuilder.setPositiveButton("Ok", null);
+        dialogBuilder.setPositiveButton("OK", null);
         dialogBuilder.show();
     }
 
