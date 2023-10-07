@@ -14,13 +14,18 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ViewFlipper;
 
 import androidx.appcompat.view.menu.MenuBuilder;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
+
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import cz.llinek.kalamari.dataTypes.EmptyHour;
 import cz.llinek.kalamari.dataTypes.Hour;
@@ -118,28 +123,84 @@ public class Timetable extends Activity {
         descriptionView.setText(description.toString());
         dialogBuilder.setTitle((hour.getSubjectName() == null ? hour.getSubjectAbbrev() : hour.getSubjectName()) + "  " + hour.getBeginTime() + " - " + hour.getEndTime());
         dialogBuilder.setMessage(description.toString());
-        dialogBuilder.setPositiveButton("OK", null);
+        dialogBuilder.setPositiveButton("Ok", null);
         dialogBuilder.show();
+    }
+
+    private View generatePermanentTimetable() {
+        Hour[][] timetable = Controller.parsePermanentHours(this);
+        HorizontalScrollView timetableScroll = new HorizontalScrollView(this);
+        LinearLayout timetableView = new LinearLayout(this);
+        timetableScroll.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+        timetableScroll.addView(timetableView);
+        timetableView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        timetableView.setOrientation(LinearLayout.VERTICAL);
+        for (Hour[] row : timetable) {
+            LinearLayout daybox = new LinearLayout(this);
+            daybox.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            daybox.setOrientation(LinearLayout.HORIZONTAL);
+            timetableView.addView(daybox);
+            for (Hour hour : row) {
+                if (hour != null) {
+                    View hourView = hour.getView();
+                    hourView.setOnClickListener(v -> onHourClicked(hour));
+                    daybox.addView(hourView);
+                } else {
+                    daybox.addView(new EmptyHour(this).getView());
+                }
+            }
+        }
+        return timetableScroll;
+    }
+
+    private View generateActualTimetable() {
+        System.out.println("generate actual");
+        Hour[][] timetable = Controller.parseActualHours(this, new Date());
+        HorizontalScrollView timetableScroll = new HorizontalScrollView(this);
+        LinearLayout timetableView = new LinearLayout(this);
+        timetableScroll.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+        timetableScroll.addView(timetableView);
+        timetableView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        timetableView.setOrientation(LinearLayout.VERTICAL);
+        for (Hour[] row : timetable) {
+            LinearLayout daybox = new LinearLayout(this);
+            daybox.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            daybox.setOrientation(LinearLayout.HORIZONTAL);
+            timetableView.addView(daybox);
+            for (Hour hour : row) {
+                if (hour != null) {
+                    View hourView = hour.getView();
+                    hourView.setOnClickListener(v -> onHourClicked(hour));
+                    daybox.addView(hourView);
+                } else {
+                    daybox.addView(new EmptyHour(this).getView());
+                }
+            }
+        }
+        return timetableScroll;
     }
 
     private void showTimetable() {
         try {
-            Hour[][] timetable = Controller.parsePermanentHours(this);
+            ViewFlipper content = new ViewFlipper(this);
             LinearLayout contentView = new LinearLayout(this);
             MaterialToolbar toolbar = new MaterialToolbar(this);
+            MaterialButtonToggleGroup modeSwitch = new MaterialButtonToggleGroup(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+            MaterialButton permanentButton = new MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+            MaterialButton actualButton = new MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
             @SuppressLint("RestrictedApi") MenuBuilder menu = new MenuBuilder(this);
-            HorizontalScrollView timetableScroll = new HorizontalScrollView(this);
-            LinearLayout timetableView = new LinearLayout(this);
             ImageButton reloadButton = new ImageButton(this);
             ImageButton backButton = new ImageButton(this);
+            final View[] permanentTimetable = {generatePermanentTimetable()};
+            final View[] actualTimetable = new View[1];
+            AtomicBoolean isActualLoaded = new AtomicBoolean(false);
             contentView.setOrientation(LinearLayout.VERTICAL);
             contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.addView(toolbar);
-            MaterialButton butt;
-            contentView.addView(timetableScroll);
+            contentView.addView(content);
             toolbar.setNavigationIcon(R.drawable.outline_arrow_back_24);
             toolbar.setNavigationOnClickListener(v -> finish());
-
+            toolbar.addView(modeSwitch);
             toolbar.addView(reloadButton);
             toolbar.setTitle("Timetable");
             @SuppressLint("RestrictedApi") MenuItem reload = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, "");
@@ -152,66 +213,56 @@ public class Timetable extends Activity {
                     return true;
                 }
             });
-            MaterialToolbar.LayoutParams backLayoutParams = new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT);
-            timetableScroll.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
-            timetableScroll.addView(timetableView);
-            timetableView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-            timetableView.setOrientation(LinearLayout.VERTICAL);
             reloadButton.setBackgroundResource(R.drawable.outline_refresh_24);
+            reloadButton.setLayoutParams(new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
             reloadButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     updatePermanentTimetable(getApplicationContext());
-                    showTimetable();
+                    content.removeAllViews();
+                    permanentTimetable[0] = generatePermanentTimetable();
+                    content.addView(permanentTimetable[0]);
+                    actualTimetable[0] = generateActualTimetable();
+                    content.addView(actualTimetable[0]);
                 }
             });
-            backLayoutParams.gravity = Gravity.RIGHT;
             backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
-            backButton.setLayoutParams(backLayoutParams);
+            backButton.setLayoutParams(new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
             backButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     finish();
                 }
             });
-            for (Hour[] row : timetable) {
-                LinearLayout daybox = new LinearLayout(this);
-                daybox.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-                daybox.setOrientation(LinearLayout.HORIZONTAL);
-                timetableView.addView(daybox);
-                /*for (Hour hour : row) {
-                    if (hour == null) {
-                        Button hourButton = new Button(this);
-                        hourButton.setBackgroundColor(getResources().getColor(R.color.black));
-                        continue;
+            content.addView(permanentTimetable[0]);
+            permanentButton.setText("Permanent");
+            actualButton.setText("Actual");
+            modeSwitch.addView(permanentButton);
+            modeSwitch.addView(actualButton);
+            modeSwitch.setSingleSelection(true);
+            modeSwitch.setSelectionRequired(true);
+            modeSwitch.check(permanentButton.getId());
+            modeSwitch.setLayoutParams(new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+            modeSwitch.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                if (actualTimetable != null) {
+                    if (!isActualLoaded.get()) {
+                        content.addView(actualTimetable[0]);
+                        isActualLoaded.set(true);
                     }
-                    Button hourButton = new Button(this);
-                    hourButton.setBackgroundColor(getResources().getColor(R.color.element_background));
-                    hourButton.setText(getSubjectById(this, hour.getHourId()).getAbbrev());
-                    hourButton.setTextSize(Constants.SUBJECT_TEXT_SIZE);
-                    hourButton.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-                    hourButton.setMinHeight(dpToPx(this, Constants.TIMETABLE_CELL_DP));
-                    hourButton.setMinWidth(dpToPx(this, Constants.TIMETABLE_CELL_DP));
-                    if (hour.getChange() == null) {
-                        hourButton.setBackgroundColor(getResources().getColor(R.color.change));
-                    }
-                    daybox.addView(hourButton);
-                }*/
-                for (Hour hour : row) {
-                    if (hour != null) {
-                        View hourView = hour.getView();
-                        hourView.setOnClickListener(v -> onHourClicked(hour));
-                        daybox.addView(hourView);
+                    if (modeSwitch.getCheckedButtonId() == permanentButton.getId()) {
+                        content.showPrevious();
                     } else {
-                        daybox.addView(new EmptyHour(this).getView());
+                        content.showNext();
                     }
+                } else {
+                    modeSwitch.check(permanentButton.getId());
                 }
-            }
+            });
             setContentView(contentView);
+            actualTimetable[0] = generateActualTimetable();
         } catch (NullPointerException e) {
             e.printStackTrace();
             showEmptyTimetable();
-            return;
         }
 
     }

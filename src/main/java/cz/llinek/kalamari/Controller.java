@@ -18,6 +18,8 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -36,6 +38,30 @@ public class Controller {
                 if (response != null) {
                     try {
                         FileManager.fileWrite(Constants.PERMANENT_TIMETABLE_FILENAME, response);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.err.println(e.getMessage());
+                    }
+                }
+            }
+
+            @Override
+            public int join() {
+                return 5000;
+            }
+        });
+    }
+
+    public static void updateActualTimetable(Context context, Date day) {
+        Calendar date = Calendar.getInstance();
+        date.setTime(day);
+        String filename = Constants.ACTUAL_TIMETABLE_FILENAME.replaceAll("Y", String.valueOf(date.get(Calendar.YEAR))).replaceAll("M", String.valueOf(date.get(Calendar.MONTH))).replaceAll("D", String.valueOf(date.get(Calendar.DAY_OF_MONTH)));
+        performRequest(context, "/api/3/timetable/actual?date=" + date.get(Calendar.YEAR) + '-' + (((date.get(Calendar.MONTH) + 1) < 10) ? ("0" + (date.get(Calendar.MONTH) + 1)) : (date.get(Calendar.MONTH) + 1)) + '-' + ((date.get(Calendar.DAY_OF_MONTH)) < 10 ? "0" + date.get(Calendar.DAY_OF_MONTH) : date.get(Calendar.DAY_OF_MONTH)), new RequestCallback() {
+            @Override
+            public void run(String response) {
+                if (response != null) {
+                    try {
+                        FileManager.fileWrite(filename, response);
                     } catch (IOException e) {
                         e.printStackTrace();
                         System.err.println(e.getMessage());
@@ -85,32 +111,55 @@ public class Controller {
             }
             hours = new Hour[days][maxHours - minHours + 1];
             for (int dayId = 0; dayId < hours.length; dayId++) {
-                /*for (int hourId = 0; hourId < hours[dayId].length; hourId++) {
-                    JSONObject hour = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms").getJSONObject(hourId);
-                    String[] groupIds = new String[hour.getJSONArray("GroupIds").length()];
-                    String[] cycleIds = new String[hour.getJSONArray("CycleIds").length()];
-                    for (int k = 0; k < groupIds.length; k++) {
-                        groupIds[k] = hour.getJSONArray("GroupIds").getString(k);
-                    }
-                    for (int k = 0; k < cycleIds.length; k++) {
-                        cycleIds[k] = hour.getJSONArray("CycleIds").getString(k);
-                    }
-                    try {
-                        JSONObject c = hour.getJSONObject("Change");
-                        Change change = new Change(c.getString("ChangeSubject"), getTimestampFormatter().parse(c.getString("Day")), c.getString("Hours"), c.getString("ChangeType"), c.getString("Description"), c.getString("Time"), c.getString("TypeAbbrev"), c.getString("TypeName"));
-                        hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, change, hour.getString("Theme"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                        hours[dayId][hourId] = new Hour(hour.getInt("HourId"), groupIds, hour.getString("TeacherId"), hour.getString("RoomId"), cycleIds, null, hour.getString("Theme"));
-                    }
-                }*/
                 JSONArray atoms = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms");
                 for (int i = 0; i < atoms.length(); i++) {
                     JSONObject hour = atoms.getJSONObject(i);
                     hours[dayId][hour.getInt("HourId") - minHours] = new Hour(context, hour, Constants.PERMANENT_TIMETABLE_FILENAME);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+        }
+        return hours;
+    }
+
+    public static Hour[][] parseActualHours(Context context, Date day) {
+        Calendar date = Calendar.getInstance();
+        date.setTime(day);
+        String filename = Constants.ACTUAL_TIMETABLE_FILENAME.replaceAll("Y", String.valueOf(date.get(Calendar.YEAR))).replaceAll("M", String.valueOf(date.get(Calendar.MONTH))).replaceAll("D", String.valueOf(date.get(Calendar.DAY_OF_MONTH)));
+        String response;
+        Hour[][] hours = null;
+        if (FileManager.exists(filename)) {
+            response = FileManager.readFile(filename);
+        } else {
+            updateActualTimetable(context, day);
+            response = FileManager.readFile(filename);
+        }
+        try {
+            JSONObject rozvrh = new JSONObject(response);
+            int minHours = -1;
+            int maxHours = -1;
+            int days = 0;
+            for (int i = rozvrh.getJSONArray("Days").length() - 1; i >= 0; i--) {
+                if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length() > 0) {
+                    days++;
+                    for (int j = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").length() - 1; j >= 0; j--) {
+                        if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId") < minHours || minHours == -1) {
+                            minHours = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId");
+                        }
+                        if (rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId") > maxHours || maxHours == -1) {
+                            maxHours = rozvrh.getJSONArray("Days").getJSONObject(i).getJSONArray("Atoms").getJSONObject(j).getInt("HourId");
+                        }
+                    }
+                }
+            }
+            hours = new Hour[days][maxHours - minHours + 1];
+            for (int dayId = 0; dayId < hours.length; dayId++) {
+                JSONArray atoms = rozvrh.getJSONArray("Days").getJSONObject(dayId).getJSONArray("Atoms");
+                for (int i = 0; i < atoms.length(); i++) {
+                    JSONObject hour = atoms.getJSONObject(i);
+                    hours[dayId][hour.getInt("HourId") - minHours] = new Hour(context, hour, filename);
                 }
             }
         } catch (JSONException e) {

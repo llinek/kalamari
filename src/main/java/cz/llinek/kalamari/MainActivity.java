@@ -16,7 +16,6 @@ import com.google.android.material.button.MaterialButton;
 public class MainActivity extends Activity {
 
     private void basicScreen() {
-        Toast.makeText(this, "afterlogin", Toast.LENGTH_SHORT).show();
         LinearLayout vBox = new LinearLayout(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, 0);

@@ -4,7 +4,7 @@ public class Constants {
     public static final String CREDENTIALS_FILENAME = "userdata/credentials.cfg";
     public static final String USERDATA_DIRECTORY = "userdata";
     public static final String PERMANENT_TIMETABLE_FILENAME = "userdata/timetable-perm.json";
-    public static final String ACTUAL_TIMETABLE_FILENAME = "userdata/timetable-*Y:*M:*D.json";
+    public static final String ACTUAL_TIMETABLE_FILENAME = "userdata/timetable-Y:M:D.json";
     public static final String TIMESTAMP = "yyyy-MM-dd'T'HH:mm:ssZ";
     public static final int LOGIN_CONFIRM_TEXT_SIZE = 30;
     public static final int LOGIN_SCHOOLLIST_TEXT_SIZE = 25;
