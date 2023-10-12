@@ -22,6 +22,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.util.Date;
@@ -179,10 +180,15 @@ public class Timetable extends Activity {
         }
         return timetableScroll;
     }
+    private View generateLoadingTimetable() {
+        FrameLayout layout = new FrameLayout(this);
+        CircularProgressIndicator loading = new CircularProgressIndicator(this);
+        layout.addView(loading);
+        return layout;
+    }
 
     private void showTimetable() {
         try {
-            ViewFlipper content = new ViewFlipper(this);
             LinearLayout contentView = new LinearLayout(this);
             MaterialToolbar toolbar = new MaterialToolbar(this);
             MaterialButtonToggleGroup modeSwitch = new MaterialButtonToggleGroup(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
@@ -191,13 +197,14 @@ public class Timetable extends Activity {
             @SuppressLint("RestrictedApi") MenuBuilder menu = new MenuBuilder(this);
             ImageButton reloadButton = new ImageButton(this);
             ImageButton backButton = new ImageButton(this);
-            final View[] permanentTimetable = {generatePermanentTimetable()};
+            final View[] permanentTimetable = new View[1];
             final View[] actualTimetable = new View[1];
-            AtomicBoolean isActualLoaded = new AtomicBoolean(false);
+            Thread load
             contentView.setOrientation(LinearLayout.VERTICAL);
             contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.addView(toolbar);
-            contentView.addView(content);
+            contentView.addView(loadingFlipper);
+            contentView.removeViewAt(contentView.view);
             toolbar.setNavigationIcon(R.drawable.outline_arrow_back_24);
             toolbar.setNavigationOnClickListener(v -> finish());
             toolbar.addView(modeSwitch);
@@ -219,11 +226,11 @@ public class Timetable extends Activity {
                 @Override
                 public void onClick(View view) {
                     updatePermanentTimetable(getApplicationContext());
-                    content.removeAllViews();
+                    modeFlipper.removeAllViews();
                     permanentTimetable[0] = generatePermanentTimetable();
-                    content.addView(permanentTimetable[0]);
+                    modeFlipper.addView(permanentTimetable[0]);
                     actualTimetable[0] = generateActualTimetable();
-                    content.addView(actualTimetable[0]);
+                    modeFlipper.addView(actualTimetable[0]);
                 }
             });
             backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
@@ -234,7 +241,9 @@ public class Timetable extends Activity {
                     finish();
                 }
             });
-            content.addView(permanentTimetable[0]);
+            loadingFlipper.addView(generateLoadingTimetable());
+            loadingFlipper.addView(modeFlipper);
+            modeFlipper.addView(permanentTimetable[0]);
             permanentButton.setText("Permanent");
             actualButton.setText("Actual");
             modeSwitch.addView(permanentButton);
@@ -244,19 +253,11 @@ public class Timetable extends Activity {
             modeSwitch.check(permanentButton.getId());
             modeSwitch.setLayoutParams(new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
             modeSwitch.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-                if (actualTimetable != null) {
-                    if (!isActualLoaded.get()) {
-                        content.addView(actualTimetable[0]);
-                        isActualLoaded.set(true);
-                    }
                     if (modeSwitch.getCheckedButtonId() == permanentButton.getId()) {
-                        content.showPrevious();
+                        modeFlipper.showPrevious();
                     } else {
-                        content.showNext();
+                        modeFlipper.showNext();
                     }
-                } else {
-                    modeSwitch.check(permanentButton.getId());
-                }
             });
             setContentView(contentView);
             actualTimetable[0] = generateActualTimetable();
