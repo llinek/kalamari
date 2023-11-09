@@ -189,6 +189,10 @@ public class Timetable extends Activity {
 
     private void showTimetable() {
         try {
+            Boolean isTempLoaded = false;
+            Boolean isTempShown = false;
+            FrameLayout loadingView = new FrameLayout(this);
+            FrameLayout.LayoutParams loadingParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
             LinearLayout contentView = new LinearLayout(this);
             MaterialToolbar toolbar = new MaterialToolbar(this);
             MaterialButtonToggleGroup modeSwitch = new MaterialButtonToggleGroup(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
@@ -199,12 +203,28 @@ public class Timetable extends Activity {
             ImageButton backButton = new ImageButton(this);
             final View[] permanentTimetable = new View[1];
             final View[] actualTimetable = new View[1];
-            Thread load
+            loadingParams.gravity = Gravity.CENTER;
+            CircularProgressIndicator loadingIndicator = new CircularProgressIndicator(this);
+            loadingIndicator.setIndeterminate(true);
+            loadingIndicator.setLayoutParams(loadingParams);
+            loadingView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+            loadingView.addView(loadingIndicator);
+            Thread loadPrimary = new Thread(() -> {
+                contentView.removeViewAt(1);
+                contentView.addView(loadingView);
+                ! continue here
+                permanentTimetable[0] = generatePermanentTimetable();
+                runOnUiThread(() -> {
+
+                });
+            });
+            Thread loadSecond = new Thread(() -> {
+                permanentTimetable[0] = generatePermanentTimetable();
+            });
             contentView.setOrientation(LinearLayout.VERTICAL);
             contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.addView(toolbar);
-            contentView.addView(loadingFlipper);
-            contentView.removeViewAt(contentView.view);
+            contentView.addView(loadingView);
             toolbar.setNavigationIcon(R.drawable.outline_arrow_back_24);
             toolbar.setNavigationOnClickListener(v -> finish());
             toolbar.addView(modeSwitch);
@@ -225,12 +245,7 @@ public class Timetable extends Activity {
             reloadButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    updatePermanentTimetable(getApplicationContext());
-                    modeFlipper.removeAllViews();
-                    permanentTimetable[0] = generatePermanentTimetable();
-                    modeFlipper.addView(permanentTimetable[0]);
-                    actualTimetable[0] = generateActualTimetable();
-                    modeFlipper.addView(actualTimetable[0]);
+                    loadPrimary.start();
                 }
             });
             backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
@@ -241,9 +256,6 @@ public class Timetable extends Activity {
                     finish();
                 }
             });
-            loadingFlipper.addView(generateLoadingTimetable());
-            loadingFlipper.addView(modeFlipper);
-            modeFlipper.addView(permanentTimetable[0]);
             permanentButton.setText("Permanent");
             actualButton.setText("Actual");
             modeSwitch.addView(permanentButton);
