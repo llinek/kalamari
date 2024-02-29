@@ -1,5 +1,6 @@
 package cz.llinek.kalamari;
 
+import static cz.llinek.kalamari.Controller.updateActualTimetable;
 import static cz.llinek.kalamari.Controller.updatePermanentTimetable;
 
 import android.annotation.SuppressLint;
@@ -180,6 +181,7 @@ public class Timetable extends Activity {
         }
         return timetableScroll;
     }
+
     private View generateLoadingTimetable() {
         FrameLayout layout = new FrameLayout(this);
         CircularProgressIndicator loading = new CircularProgressIndicator(this);
@@ -189,8 +191,9 @@ public class Timetable extends Activity {
 
     private void showTimetable() {
         try {
-            Boolean isTempLoaded = false;
-            Boolean isTempShown = false;
+            final boolean[] isPermLoaded = {false};
+            final Boolean[] isTempLoaded = {false};
+            final boolean[] isTempShown = {false};
             FrameLayout loadingView = new FrameLayout(this);
             FrameLayout.LayoutParams loadingParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
             LinearLayout contentView = new LinearLayout(this);
@@ -210,16 +213,36 @@ public class Timetable extends Activity {
             loadingView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             loadingView.addView(loadingIndicator);
             Thread loadPrimary = new Thread(() -> {
-                contentView.removeViewAt(1);
-                contentView.addView(loadingView);
-                ! continue here
+                runOnUiThread(() -> {
+                    if (!isTempShown[0]) {
+                        contentView.removeViewAt(1);
+                        contentView.addView(loadingView);
+                    }
+                });
                 permanentTimetable[0] = generatePermanentTimetable();
                 runOnUiThread(() -> {
-
+                    if (!isTempShown[0]) {
+                        contentView.removeViewAt(1);
+                        contentView.addView(permanentTimetable[0]);
+                    }
+                    isPermLoaded[0] = true;
                 });
             });
-            Thread loadSecond = new Thread(() -> {
-                permanentTimetable[0] = generatePermanentTimetable();
+            Thread loadSecondary = new Thread(() -> {
+                runOnUiThread(() -> {
+                    if (isTempShown[0]) {
+                        contentView.removeViewAt(1);
+                        contentView.addView(loadingView);
+                    }
+                });
+                actualTimetable[0] = generateActualTimetable();
+                runOnUiThread(() -> {
+                    if (isTempShown[0]) {
+                        contentView.removeViewAt(1);
+                        contentView.addView(actualTimetable[0]);
+                    }
+                    isTempLoaded[0] = true;
+                });
             });
             contentView.setOrientation(LinearLayout.VERTICAL);
             contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
@@ -235,8 +258,13 @@ public class Timetable extends Activity {
             reload.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    updatePermanentTimetable(getApplicationContext());
-                    showTimetable();
+                    if (isTempShown[0]) {
+                        updateActualTimetable(getApplicationContext(), new Date());
+                        loadSecondary.start();
+                    } else {
+                        updatePermanentTimetable(getApplicationContext());
+                        loadPrimary.start();
+                    }
                     return true;
                 }
             });
@@ -245,7 +273,13 @@ public class Timetable extends Activity {
             reloadButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    loadPrimary.start();
+                    if (isTempShown[0]) {
+                        updateActualTimetable(getApplicationContext(), new Date());
+                        loadSecondary.start();
+                    } else {
+                        updatePermanentTimetable(getApplicationContext());
+                        loadPrimary.start();
+                    }
                 }
             });
             backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
@@ -265,11 +299,23 @@ public class Timetable extends Activity {
             modeSwitch.check(permanentButton.getId());
             modeSwitch.setLayoutParams(new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
             modeSwitch.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-                    if (modeSwitch.getCheckedButtonId() == permanentButton.getId()) {
-                        modeFlipper.showPrevious();
+                if (modeSwitch.getCheckedButtonId() == permanentButton.getId()) {
+                    isTempShown[0] = false;
+                    if (!isPermLoaded[0]) {
+                        loadPrimary.start();
                     } else {
-                        modeFlipper.showNext();
+                        contentView.removeViewAt(1);
+                        contentView.addView(permanentTimetable[0]);
                     }
+                } else {
+                    isTempShown[0] = true;
+                    if (!isTempLoaded[0]) {
+                        loadSecondary.start();
+                    } else {
+                        contentView.removeViewAt(1);
+                        contentView.addView(actualTimetable[0]);
+                    }
+                }
             });
             setContentView(contentView);
             actualTimetable[0] = generateActualTimetable();
