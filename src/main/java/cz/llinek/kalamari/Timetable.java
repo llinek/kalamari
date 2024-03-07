@@ -188,7 +188,16 @@ public class Timetable extends Activity {
         layout.addView(loading);
         return layout;
     }
-
+    private Thread getLoadPrimary(Runnable loadPrimary) {
+        Thread thread = new Thread(loadPrimary);
+        thread.setDaemon(true);
+        return thread;
+    }
+    private Thread getLoadSecondary(Runnable loadSecondary) {
+        Thread thread = new Thread(loadSecondary);
+        thread.setDaemon(true);
+        return thread;
+    }
     private void showTimetable() {
         try {
             final boolean[] isPermLoaded = {false};
@@ -212,9 +221,9 @@ public class Timetable extends Activity {
             loadingIndicator.setLayoutParams(loadingParams);
             loadingView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             loadingView.addView(loadingIndicator);
-            Thread loadPrimary = new Thread(() -> {
+            Runnable loadPrimary = () -> {
                 runOnUiThread(() -> {
-                    if (!isTempShown[0]) {
+                    if (!isTempShown[0] || !isTempLoaded[0]) {
                         contentView.removeViewAt(1);
                         contentView.addView(loadingView);
                     }
@@ -227,10 +236,10 @@ public class Timetable extends Activity {
                     }
                     isPermLoaded[0] = true;
                 });
-            });
-            Thread loadSecondary = new Thread(() -> {
+            };
+            Runnable loadSecondary = () -> {
                 runOnUiThread(() -> {
-                    if (isTempShown[0]) {
+                    if (isTempShown[0] || !isTempLoaded[0]) {
                         contentView.removeViewAt(1);
                         contentView.addView(loadingView);
                     }
@@ -243,7 +252,7 @@ public class Timetable extends Activity {
                     }
                     isTempLoaded[0] = true;
                 });
-            });
+            };
             contentView.setOrientation(LinearLayout.VERTICAL);
             contentView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
             contentView.addView(toolbar);
@@ -260,10 +269,10 @@ public class Timetable extends Activity {
                 public boolean onMenuItemClick(MenuItem item) {
                     if (isTempShown[0]) {
                         updateActualTimetable(getApplicationContext(), new Date());
-                        loadSecondary.start();
+                        getLoadSecondary(loadSecondary).start();
                     } else {
                         updatePermanentTimetable(getApplicationContext());
-                        loadPrimary.start();
+                        getLoadPrimary(loadPrimary).start();
                     }
                     return true;
                 }
@@ -275,14 +284,13 @@ public class Timetable extends Activity {
                 public void onClick(View view) {
                     if (isTempShown[0]) {
                         updateActualTimetable(getApplicationContext(), new Date());
-                        loadSecondary.start();
+                        getLoadSecondary(loadSecondary).start();
                     } else {
                         updatePermanentTimetable(getApplicationContext());
-                        loadPrimary.start();
+                        getLoadPrimary(loadPrimary).start();
                     }
                 }
-            });
-            backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
+            }); backButton.setBackgroundResource(R.drawable.outline_arrow_back_24);
             backButton.setLayoutParams(new MaterialToolbar.LayoutParams(MaterialToolbar.LayoutParams.WRAP_CONTENT, MaterialToolbar.LayoutParams.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
             backButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -302,7 +310,7 @@ public class Timetable extends Activity {
                 if (modeSwitch.getCheckedButtonId() == permanentButton.getId()) {
                     isTempShown[0] = false;
                     if (!isPermLoaded[0]) {
-                        loadPrimary.start();
+                        getLoadPrimary(loadPrimary).start();
                     } else {
                         contentView.removeViewAt(1);
                         contentView.addView(permanentTimetable[0]);
@@ -310,7 +318,7 @@ public class Timetable extends Activity {
                 } else {
                     isTempShown[0] = true;
                     if (!isTempLoaded[0]) {
-                        loadSecondary.start();
+                        getLoadSecondary(loadSecondary).start();
                     } else {
                         contentView.removeViewAt(1);
                         contentView.addView(actualTimetable[0]);
