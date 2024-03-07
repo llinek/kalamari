@@ -325,8 +325,9 @@ public class Timetable extends Activity {
                     }
                 }
             });
+            getLoadPrimary(loadPrimary).start();
+            getLoadSecondary(loadSecondary).start();
             setContentView(contentView);
-            actualTimetable[0] = generateActualTimetable();
         } catch (NullPointerException e) {
             e.printStackTrace();
             showEmptyTimetable();
